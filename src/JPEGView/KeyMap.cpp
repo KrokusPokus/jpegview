@@ -19,7 +19,7 @@ struct SKey {
 	int KeyCode;
 };
 
-#define NUM_KEYS 30
+#define NUM_KEYS 40
 
 static SKey KeyTable[NUM_KEYS] = {
 	{ _T("Alt"), M_ALT },
@@ -51,7 +51,17 @@ static SKey KeyTable[NUM_KEYS] = {
 	{ _T("MouseM"), VK_MBUTTON },
 	{ _T("MouseX1"), VK_XBUTTON1 },
 	{ _T("MouseX2"), VK_XBUTTON2 },
-	{ _T("MouseDblClk"), VK_LBUTTONDBLCLK }
+	{ _T("MouseDblClk"), VK_LBUTTONDBLCLK },
+	{ _T("Numpad0"), VK_NUMPAD0 },
+	{ _T("Numpad1"), VK_NUMPAD1 },
+	{ _T("Numpad2"), VK_NUMPAD2 },
+	{ _T("Numpad3"), VK_NUMPAD3 },
+	{ _T("Numpad4"), VK_NUMPAD4 },
+	{ _T("Numpad5"), VK_NUMPAD5 },
+	{ _T("Numpad6"), VK_NUMPAD6 },
+	{ _T("Numpad7"), VK_NUMPAD7 },
+	{ _T("Numpad8"), VK_NUMPAD8 },
+	{ _T("Numpad9"), VK_NUMPAD9 }
 };
 
 static LPTSTR _SkipWhiteSpace(LPTSTR sText) {

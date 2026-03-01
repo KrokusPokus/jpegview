@@ -154,7 +154,6 @@ Last Updated: 31-JAN-2023<br />
 <ul>
     <li>F1 for help</li>
     <li>Alt+F4 for exit</li>
-    <li>0..9 for slide show</li>
 </ul>
 
 <h1>
@@ -167,6 +166,8 @@ The following keys are recognized:
     <li>Esc, Return, Space, End, Home, Back, Tab, PgDn, PgUp</li>
     <li>Left, Right, Up, Down, Insert, Del, Plus, Minus, Mul, Div, Comma, Period</li>
     <li>A .. Z</li>
+    <li>0 .. 9</li>
+    <li>Numpad0 .. Numpad9</li>
     <li>F1 .. F12</li>
 </ul>
 

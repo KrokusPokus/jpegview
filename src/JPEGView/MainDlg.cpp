@@ -1297,70 +1297,9 @@ LRESULT CMainDlg::OnKeyDown(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /
 		bHandled = true;
 		m_pFileList->SetNavigationMode(Helpers::NM_LoopSubDirectories);
 		GotoImage(POS_Next);
-/*
-	} else if (wParam >= '1' && wParam <= '9' && (!bShift || bCtrl)) {
-		// Start the slideshow
-		bHandled = true;
-		int nValue = (int)wParam - '1' + 1;
-		if (bCtrl && bShift) {
-			nValue *= 10; // 1/100 seconds
-		} else if (bCtrl) {
-			nValue *= 100; // 1/10 seconds
-		} else {
-			nValue *= 1000; // seconds
-		}
-		StartMovieMode(1000.0/nValue);
-*/
 	} else if (wParam == VK_F1) {
 		bHandled = true;
 		ExecuteCommand(IDM_HELP);
-/*
-	} else if (wParam == VK_UP || wParam == VK_DOWN || wParam == VK_LEFT || wParam == VK_RIGHT) {
-		if (lParam & 0xc0000000)
-			return 1;
-
-		if (m_pCurrentImage != NULL) {
-			int iRealHeight = (int) (m_dZoom * (m_pCurrentImage->OrigHeight()));
-			int iRealWidth = (int) (m_dZoom * (m_pCurrentImage->OrigWidth()));
-
-			if (((iRealHeight > m_clientRect.Height()) && (wParam == VK_UP || wParam == VK_DOWN)) || ((iRealWidth > m_clientRect.Width()) && (wParam == VK_LEFT || wParam == VK_RIGHT))) {
-				
-				if (m_bPanTimerActive == false) {
-					m_bPanTimerActive = true;
-					::SetTimer(this->m_hWnd, PAN_TIMER_EVENT_ID, 10, NULL);
-				}
-			} else {
-				if (GetAutoZoomMode() != Helpers::ZM_BookMode) {
-					if (wParam == VK_RIGHT)
-						GotoImage(POS_Next);
-					else if (wParam == VK_LEFT)
-						GotoImage(POS_Previous);
-				} else {
-					if (iRealHeight > m_clientRect.Height()) {
-						if (m_bPanTimerActive == false) {
-							if ((m_offsets.y >= ((iRealHeight-m_clientRect.Height())/2)) && (wParam == VK_LEFT))	// Upper Border!
-								GotoImage(POS_Previous);
-							else if ((-m_offsets.y >= ((iRealHeight-m_clientRect.Height())/2)) && (wParam == VK_RIGHT))	//Lower Border!
-								GotoImage(POS_Next);
-							else {
-								m_bPanTimerActive = true;
-								::SetTimer(this->m_hWnd, PAN_TIMER_EVENT_ID, 10, NULL);
-							}
-						}
-					} else {
-						if (m_bPanTimerActive == false) {
-							if (wParam == VK_RIGHT)
-								GotoImage(POS_Next);
-							else if (wParam == VK_LEFT)
-								GotoImage(POS_Previous);
-						}
-					}
-				}
-			}
-
-			return 1;
-		}
-*/
 	} else {
 		int nCommand = m_pKeyMap->GetCommandIdForKey((int)wParam, bAlt, bCtrl, bShift);
 		if (nCommand > 0) {
@@ -2101,10 +2040,27 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_SLIDESHOW_3:
 		case IDM_SLIDESHOW_4:
 		case IDM_SLIDESHOW_5:
+		case IDM_SLIDESHOW_6:
 		case IDM_SLIDESHOW_7:
+		case IDM_SLIDESHOW_8:
+		case IDM_SLIDESHOW_9:
 		case IDM_SLIDESHOW_10:
 		case IDM_SLIDESHOW_20:
-			StartMovieMode(1.0/(nCommand - IDM_SLIDESHOW_START));
+			{
+			int nValue = nCommand - IDM_SLIDESHOW_START;
+			/*
+			bool bCtrl = (::GetKeyState(VK_CONTROL) & 0x8000) != 0;
+			bool bShift = (::GetKeyState(VK_SHIFT) & 0x8000) != 0;
+			if (bCtrl && bShift) {
+				nValue *= 10; // 1/100 seconds
+			} else if (bCtrl) {
+				nValue *= 100; // 1/10 seconds
+			} else {
+				nValue *= 1000; // seconds
+			}
+			*/
+			StartMovieMode(1.0/nValue);
+			}
 			break;
 		case IDM_EFFECT_NONE:
 		case IDM_EFFECT_BLEND:

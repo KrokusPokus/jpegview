@@ -181,14 +181,17 @@
 #define IDM_SORT_DESCENDING 7110		// :KeyMap: sort descending (decreasing in value, e.g. Z->A, 9->0)
 #define IDM_SLIDESHOW_RESUME 7399		// :KeyMap: resume slide show (after stop)
 #define IDM_SLIDESHOW_START 7400
-#define IDM_SLIDESHOW_1		7401
-#define IDM_SLIDESHOW_2		7402
-#define IDM_SLIDESHOW_3		7403
-#define IDM_SLIDESHOW_4		7404
-#define IDM_SLIDESHOW_5		7405
-#define IDM_SLIDESHOW_7		7407
-#define IDM_SLIDESHOW_10	7410
-#define IDM_SLIDESHOW_20	7420
+#define IDM_SLIDESHOW_1		7401		// :KeyMap: start slide show with 1 second timer
+#define IDM_SLIDESHOW_2		7402		// :KeyMap: start slide show with 2 second timer
+#define IDM_SLIDESHOW_3		7403		// :KeyMap: start slide show with 3 second timer
+#define IDM_SLIDESHOW_4		7404		// :KeyMap: start slide show with 4 second timer
+#define IDM_SLIDESHOW_5		7405		// :KeyMap: start slide show with 5 second timer
+#define IDM_SLIDESHOW_6		7406		// :KeyMap: start slide show with 6 second timer
+#define IDM_SLIDESHOW_7		7407		// :KeyMap: start slide show with 7 second timer
+#define IDM_SLIDESHOW_8		7408		// :KeyMap: start slide show with 8 second timer
+#define IDM_SLIDESHOW_9		7409		// :KeyMap: start slide show with 9 second timer
+#define IDM_SLIDESHOW_10	7410		// :KeyMap: start slide show with 10 second timer
+#define IDM_SLIDESHOW_20	7420		// :KeyMap: start slide show with 20 second timer
 #define IDM_EFFECT_NONE     7450
 #define IDM_EFFECT_BLEND    7451
 #define IDM_EFFECT_SLIDE_RL 7452
