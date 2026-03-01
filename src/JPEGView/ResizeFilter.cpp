@@ -460,8 +460,8 @@ void CResizeFilter::CalculateFilterParams(EFilterType eFilter) {
 		m_nFilterOffset = (m_nFilterLen - 1)/2;
 
 /* Debugging */	TCHAR debugtext[1024];
-/* Debugging */	swprintf(debugtext,1024,TEXT("[JpegView] CalculateFilterParams() dFactor=%f  m_dMultX=%f  m_nFilterLen=%d  m_nFilterOffset=%d"), dFactor, m_dMultX, m_nFilterLen, m_nFilterOffset);
-/* Debugging */	::OutputDebugStringW(debugtext);
+//* Debugging */	swprintf(debugtext,1024,TEXT("[JpegView] CalculateFilterParams() dFactor=%f  m_dMultX=%f  m_nFilterLen=%d  m_nFilterOffset=%d"), dFactor, m_dMultX, m_nFilterLen, m_nFilterOffset);
+//* Debugging */	::OutputDebugStringW(debugtext);
 		}
 	}
 

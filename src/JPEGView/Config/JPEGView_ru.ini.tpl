@@ -711,7 +711,8 @@ BookModePageHeight=122
 BookModeLaunchFullscreen=true
 
 ;Включить плавную прокрутку при нажатии клавиш панорамирования (IDM_PAN_UP, IDM_PAN_DOWN, IDM_PAN_LEFT, IDM_PAN_RIGHT)? [true/false. По умолчанию: true]
-SmoothScrolling=true
+;Работает только с клавишами управления курсором (Up/Down/Left/Right)!
+SmoothPanning=true
 
 ; Должны ли клавиши панорамирования переключать на следующее/предыдущее изображение, если панорамирование недоступно? [true/false. По умолчанию: true]
 SmartPanningKeys=true

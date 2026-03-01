@@ -295,15 +295,24 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_pNavPanelCtl = NULL;
 	m_pCropCtl = new CCropCtl(this);
 	m_pKeyMap = new CKeyMap(); // routine to load the keymap, it's not as simple as just loading one file anymore, but all logic handled by CKeyMap
-	m_pPrintImage = new CPrintImage(CSettingsProvider::This().PrintMargin(), CSettingsProvider::This().DefaultPrintWidth());
+	m_pPrintImage = new CPrintImage(sp.PrintMargin(), sp.DefaultPrintWidth());
 	m_pHelpDlg = NULL;
-/*GF*/	m_nBookModePageHeight = sp.BookModePageHeight();
-/*GF*/	m_bShowInfo = false;
-/*GF*/	m_offsets_custom = CPoint(0, 0);
-/*GF*/	memset(&m_storedWindowPlacement2, 0, sizeof(WINDOWPLACEMENT));
-/*GF*/	m_storedWindowPlacement2.length = sizeof(WINDOWPLACEMENT);
-/*GF*/	m_bDWMenabled = FALSE;
-/*GF*/	m_DynDwmFlush = 0;
+
+/*############################################*/
+/* Custom variables of the linear scaling mod */
+/*############################################*/
+
+	m_hmodDwmapi = NULL;
+	m_bDWMenabled = FALSE;
+	m_DynDwmFlush = 0;
+	
+	m_storedWindowPlacement2.length = sizeof(WINDOWPLACEMENT);
+	memset(&m_storedWindowPlacement2, 0, sizeof(WINDOWPLACEMENT));
+	m_bShowInfo = false;
+	m_bPanTimerActive = false;
+	m_nBookModePageHeight = sp.BookModePageHeight();
+	m_bAllowSmoothPanning = sp.AllowSmoothPanning();
+	m_offsets_custom = CPoint(0, 0);
 }
 
 CMainDlg::~CMainDlg() {
@@ -1303,13 +1312,15 @@ LRESULT CMainDlg::OnKeyDown(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /
 	} else {
 		int nCommand = m_pKeyMap->GetCommandIdForKey((int)wParam, bAlt, bCtrl, bShift);
 		if (nCommand > 0) {
-			if ((nCommand == IDM_PAN_UP || nCommand == IDM_PAN_DOWN || nCommand == IDM_PAN_LEFT || nCommand == IDM_PAN_RIGHT)
-				&& (lParam & 0xc0000000) // Key repeat
-				&& (CSettingsProvider::This().UseSmoothScrolling() == true)
-				&& (CSettingsProvider::This().SmartPanningKeys() == true)) {
-				// Ignore key repeat events (lParam & 0xc0000000) for the panning keys. They work with a timer that listens for the release of the up/down/left/right keys.
-				// Todo: Fix this. Right now, it only works when putting the commands on these particular keys, since the timmer only recognizes VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT.
-				return 1;
+			if (nCommand == IDM_PAN_UP || nCommand == IDM_PAN_DOWN || nCommand == IDM_PAN_LEFT || nCommand == IDM_PAN_RIGHT) {
+				if ((nCommand == IDM_PAN_UP && wParam != VK_UP) || (nCommand == IDM_PAN_DOWN &&  wParam != VK_DOWN) || (nCommand == IDM_PAN_LEFT &&  wParam != VK_LEFT) || (nCommand == IDM_PAN_RIGHT &&  wParam != VK_RIGHT)) {
+					// Allow smooth panning only for these particular keys. The scrolling timer will wait for their release to know when to stop scrolling.
+					m_bAllowSmoothPanning = false;
+				}
+				if (m_bAllowSmoothPanning && (lParam & 0xc0000000)) {
+					// Ignore key repeat events (lParam & 0xc0000000) for the panning keys.
+					return 1;
+				}
 			}
 
 			bHandled = true;
@@ -2681,8 +2692,29 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_PAN_RIGHT:
 		case IDM_PAN_LEFT:
 			if (sp.SmartPanningKeys() == false) {
-				PerformPan((nCommand == IDM_PAN_LEFT) ? PAN_STEP : (nCommand == IDM_PAN_RIGHT) ? -PAN_STEP : 0,
-					(nCommand == IDM_PAN_UP) ? PAN_STEP : (nCommand == IDM_PAN_DOWN) ? -PAN_STEP : 0, false);
+				if (m_pCurrentImage != NULL) {
+					int iRealHeight = (int) (m_dZoom * (m_pCurrentImage->OrigHeight()));
+					int iRealWidth = (int) (m_dZoom * (m_pCurrentImage->OrigWidth()));
+
+					if (((iRealHeight > m_clientRect.Height()) && (nCommand == IDM_PAN_UP || nCommand == IDM_PAN_DOWN))
+					 || (( iRealWidth >  m_clientRect.Width()) && (nCommand == IDM_PAN_LEFT || nCommand == IDM_PAN_RIGHT))) {
+						if (m_bAllowSmoothPanning) {
+							if (m_bPanTimerActive == false) {
+								m_bPanTimerActive = true;
+								::SetTimer(this->m_hWnd, PAN_TIMER_EVENT_ID, 10, NULL);
+							}
+						} else {
+							PerformPan((nCommand == IDM_PAN_LEFT) ? PAN_STEP : (nCommand == IDM_PAN_RIGHT) ? -PAN_STEP : 0,
+								(nCommand == IDM_PAN_UP) ? PAN_STEP : (nCommand == IDM_PAN_DOWN) ? -PAN_STEP : 0, false);
+						}					
+					} else {
+						PerformPan((nCommand == IDM_PAN_LEFT) ? PAN_STEP : (nCommand == IDM_PAN_RIGHT) ? -PAN_STEP : 0,
+							(nCommand == IDM_PAN_UP) ? PAN_STEP : (nCommand == IDM_PAN_DOWN) ? -PAN_STEP : 0, false);
+					}
+				} else {
+					PerformPan((nCommand == IDM_PAN_LEFT) ? PAN_STEP : (nCommand == IDM_PAN_RIGHT) ? -PAN_STEP : 0,
+						(nCommand == IDM_PAN_UP) ? PAN_STEP : (nCommand == IDM_PAN_DOWN) ? -PAN_STEP : 0, false);
+				}
 			} else {
 				if (m_pCurrentImage != NULL) {
 					int iRealHeight = (int) (m_dZoom * (m_pCurrentImage->OrigHeight()));
@@ -2690,7 +2722,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 
 					if (((iRealHeight > m_clientRect.Height()) && (nCommand == IDM_PAN_UP || nCommand == IDM_PAN_DOWN))
 					 || (( iRealWidth >  m_clientRect.Width()) && (nCommand == IDM_PAN_LEFT || nCommand == IDM_PAN_RIGHT))) {
-						if (sp.UseSmoothScrolling() == true) {
+						if (m_bAllowSmoothPanning) {
 							if (m_bPanTimerActive == false) {
 								m_bPanTimerActive = true;
 								::SetTimer(this->m_hWnd, PAN_TIMER_EVENT_ID, 10, NULL);
@@ -2713,7 +2745,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 									} else if ((-m_offsets.y >= ((iRealHeight-m_clientRect.Height())/2)) && (nCommand == IDM_PAN_RIGHT)) {	//Lower Border!
 										GotoImage(POS_Next);
 									} else {
-										if (sp.UseSmoothScrolling() == true) {
+										if (m_bAllowSmoothPanning) {
 											m_bPanTimerActive = true;
 											::SetTimer(this->m_hWnd, PAN_TIMER_EVENT_ID, 10, NULL);
 										} else {
@@ -2731,6 +2763,12 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 							}
 						}
 					}
+				} else {
+					// No image. No dimensions. Panning impossible. GotoImage
+					if (nCommand == IDM_PAN_RIGHT)
+						GotoImage(POS_Next);
+					else if (nCommand == IDM_PAN_LEFT)
+						GotoImage(POS_Previous);
 				}
 			}
 			break;

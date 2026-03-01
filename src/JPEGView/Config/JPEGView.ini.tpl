@@ -630,8 +630,9 @@ BookModePageHeight=122
 ; Launch book type (CBZ/CBR/CB7 files and files in folders with "\manga\" or "\comics\" in their path fullscreen? [true/false. Default: true]
 BookModeLaunchFullscreen=true
 
-; Enable smooth scrolling on panning keys (IDM_PAN_UP, IDM_PAN_DOWN, IDM_PAN_LEFT, IDM_PAN_RIGHT)? [true/false. Default: true]
-SmoothScrolling=true
+; Enable smooth panning for panning keys (IDM_PAN_UP, IDM_PAN_DOWN, IDM_PAN_LEFT, IDM_PAN_RIGHT)? [true/false. Default: true]
+; Only works with the cursor keys (up/down/left/right)!
+SmoothPanning=true
 
 ; Should the panning keys navigate to next/previous image, when panning isn't available? [true/false. Default: true]
 SmartPanningKeys=true

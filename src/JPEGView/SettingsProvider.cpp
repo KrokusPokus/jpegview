@@ -382,7 +382,7 @@ CSettingsProvider::CSettingsProvider(void) {
 // -------------------------------------------------------------------------------------------
 // [GF] Custom non-writable ini settings of this mod
 	m_bBookModeLaunchFullscreen = GetBool(_T("BookModeLaunchFullscreen"), true);
-	m_bUseSmoothScrolling = GetBool(_T("SmoothScrolling"), true);
+	m_bSmoothPanning = GetBool(_T("SmoothPanning"), true);
 	m_bSmartPanningKeys = GetBool(_T("SmartPanningKeys"), true);
 	m_bTitleBarUseFileIcon = GetBool(_T("TitleBarUseFileIcon"), true);
 // -------------------------------------------------------------------------------------------

@@ -185,7 +185,7 @@ public:
 
 /*GF*/	int BookModePageHeight() { return m_nBookModePageHeight; }
 /*GF*/	bool BookModeLaunchFullscreen() { return m_bBookModeLaunchFullscreen; }
-/*GF*/	bool UseSmoothScrolling() { return m_bUseSmoothScrolling; }
+/*GF*/	bool AllowSmoothPanning() { return m_bSmoothPanning; }
 /*GF*/	bool SmartPanningKeys() { return m_bSmartPanningKeys; }
 /*GF*/	bool TitleBarUseFileIcon() { return m_bTitleBarUseFileIcon; }
 
@@ -346,7 +346,7 @@ private:
 
 /*GF*/	int m_nBookModePageHeight;
 /*GF*/	bool m_bBookModeLaunchFullscreen;
-/*GF*/	bool m_bUseSmoothScrolling;
+/*GF*/	bool m_bSmoothPanning;
 /*GF*/	bool m_bSmartPanningKeys;
 /*GF*/	bool m_bTitleBarUseFileIcon;
 };
