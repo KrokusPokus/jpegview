@@ -14,7 +14,7 @@ More information on how resampling filters work: http://legacy.imagemagick.org/U
 ## System Requirements
 
 * 64-bit Windows OS
-* CPU with SSE2. This is the only instruction set fully working with linear light math at this time. 
+* CPU with with at least SSE2 for linear light resampling to work. Anything lower will do regular resampling.
 
 
 ## Additional Thanks
