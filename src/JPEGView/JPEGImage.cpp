@@ -14,10 +14,6 @@
 #include <math.h>
 #include <assert.h>
 
-// Hacky workaround.  Look at comment block in CJPEGImage::Resample()
-// undefine this flag to investigate which optimization might cause that particular failure (TODO)
-#define AVX_SSE_FREEZE_FALLBACK
-
 ///////////////////////////////////////////////////////////////////////////////////
 // Static helpers
 ///////////////////////////////////////////////////////////////////////////////////
@@ -34,7 +30,7 @@ static void RotateInplace(const CSize& imageSize, double& dX, double& dY, double
 static bool SupportsSIMD(Helpers::CPUType cpuType) {
 	switch (cpuType)
 	{
-	case Helpers::CPU_MMX:
+//	case Helpers::CPU_MMX:
 	case Helpers::CPU_SSE:
 	case Helpers::CPU_AVX2:
 		return true;
@@ -65,8 +61,18 @@ static CBasicProcessing::SIMDArchitecture ToSIMDArchitecture(Helpers::CPUType cp
 CJPEGImage::CJPEGImage(int nWidth, int nHeight, void* pPixels, void* pEXIFData, int nChannels, __int64 nJPEGHash,
 					   EImageFormat eImageFormat, bool bIsAnimation, int nFrameIndex, int nNumberOfFrames, int nFrameTimeMs,
 					   CLocalDensityCorr* pLDC, bool bIsThumbnailImage, CRawMetadata* pRawMetadata)
+	: CJPEGImage(nWidth, nHeight, pPixels, pEXIFData, nChannels, nJPEGHash,
+		eImageFormat, IF_Unknown, bIsAnimation, nFrameIndex, nNumberOfFrames, nFrameTimeMs,
+		pLDC, bIsThumbnailImage, pRawMetadata)
+{
+}
+
+CJPEGImage::CJPEGImage(int nWidth, int nHeight, void* pPixels, void* pEXIFData, int nChannels, __int64 nJPEGHash,
+	EImageFormat eImageFormat, EImageFormat eContainerFormat, bool bIsAnimation, int nFrameIndex, int nNumberOfFrames, int nFrameTimeMs,
+	CLocalDensityCorr * pLDC, bool bIsThumbnailImage, CRawMetadata * pRawMetadata)
 	: m_rotationParams{ 0 },
-	m_fColorCorrectionFactorsNull{ 0 }
+	m_fColorCorrectionFactorsNull{ 0 },
+	m_eContainerFormat(eContainerFormat)
 {
 	if (nChannels == 3 || nChannels == 4) {
 		m_pOrigPixels = pPixels;
@@ -98,6 +104,11 @@ CJPEGImage::CJPEGImage(int nWidth, int nHeight, void* pPixels, void* pEXIFData, 
 	m_nPixelHash = nJPEGHash;
 	m_eImageFormat = eImageFormat;
 	m_bIsAnimation = bIsAnimation;
+// For containers like CBZ, the meaning of "bIsAnimation" is actually "bMultipleFiles"
+// It shouldn't really be needed for anything, since that check is done in ContainerHasMultipleImages with (m_nNumberOfFrames > 1)
+// Setting m_bIsAnimation to "false" fixes several issues, all caused by IsAnimation() checks.
+/*GF*/	if (eContainerFormat != IF_Unknown)
+/*GF*/		m_bIsAnimation = false;
 	m_nFrameIndex = nFrameIndex;
 	m_nNumberOfFrames = nNumberOfFrames;
 	m_nFrameTimeMs = nFrameTimeMs;
@@ -573,35 +584,13 @@ void* CJPEGImage::Resample(CSize fullTargetSize, CSize clippingSize, CPoint targ
 						  EProcessingFlags eProcFlags, double dSharpen, double dRotation, EResizeType eResizeType) {
 
 	Helpers::CPUType cpu = CSettingsProvider::This().AlgorithmImplementation();
-	// NOTE: Hacky workaround... there is probably a very obscure bug in the AVX2 implementation
-	//       which causes WaitForSingleObject to wait indefinitely on SampleUp_HQ_SIMD()
-	//       when window dimensions are > 3224 pixels wide.
-	//
-	// This obscure bug ONLY manifests itself on RELEASE builds, and not DEBUG builds, meaning
-	// it happens only when optimization is turned on.  I haven't had the chance to trial and error exactly
-	// which optimization flag causes the freeze, but that's a future TODO
-	//
-	// A lot of trial and error tests has a freeze happening at 3226 pixels wide, but not at 3224 pixels. (client rect pixels)
-	// (I was not able to test how this all behaves if it's 3224 pixels high, so, when displays get that cool, then we might have to revisit this hack)
-	// The AVX2 code is very advanced, and I don't have the expertise to debug it -sylikc
-	//
-	// The known workarounds based on GitHub issues is to either set CPUType=SSE or HighQualityResampling=false
-	//
-	// So, here, we detect and fallback to SSE when the conditions are met.  To be safe, I set the limit at 3200 pixels
-#ifdef AVX_SSE_FREEZE_FALLBACK
-	if (cpu == Helpers::CPU_AVX2 && clippingSize.cx > 3200) {
-		// only override the usage for SSE for these specific conditions
-		// AVX2 is supposed to be ~2.4x faster than SSE
-		cpu = Helpers::CPU_SSE;
-	}
-#endif
-
 	EFilterType filter = CSettingsProvider::This().DownsamplingFilter();
 
 	if (fullTargetSize.cx > 65535 || fullTargetSize.cy > 65535) return NULL;
 
 	if (GetProcessingFlag(eProcFlags, PFLAG_HighQualityResampling) && 
-		!(eResizeType == NoResize && (filter == Filter_Downsampling_Best_Quality || filter == Filter_Downsampling_No_Aliasing))) {
+		!(eResizeType == NoResize) && (filter>0)) {
+/*GF*/	dSharpen = 0.0;		// [GF] Todo: Set this at some better place
 		if (SupportsSIMD(cpu)) {
 			if (eResizeType == UpSample) {
 				return CBasicProcessing::SampleUp_HQ_SIMD(fullTargetSize, targetOffset, clippingSize, 
@@ -639,7 +628,8 @@ void* CJPEGImage::InternalResize(void* pixels, int channels, EResizeFilter filte
 		return CBasicProcessing::PointSample(targetSize, CPoint(0, 0), targetSize, sourceSize, pixels, channels);
 	}
 
-	EFilterType downSamplingFilter = (filter == Resize_NoAliasing) ? Filter_Downsampling_No_Aliasing : Filter_Downsampling_Best_Quality;
+//	EFilterType downSamplingFilter = (filter == Resize_NoAliasing) ? Filter_Downsampling_No_Aliasing : Filter_Downsampling_Best_Quality;
+	EFilterType downSamplingFilter = CSettingsProvider::This().DownsamplingFilter();
 	double dSharpen = (filter == Resize_SharpenLow) ? 0.15 : (filter == Resize_SharpenMedium) ? 0.3 : 0.0;
 
 	if (SupportsSIMD(cpu)) {
@@ -1410,6 +1400,7 @@ int CJPEGImage::GetRotationFromEXIF(int nOrigRotation) {
 		// So check if the thumbnail orientation is the same as the image orientation.
 		// If not, it can be assumed that someone touched the pixels and we ignore the EXIF
 		// orientation.
+/* [GF] Do not rely on aspect ratio comparison to assume Exif roation flag wrong.
 		if (m_pEXIFReader->GetThumbnailWidth() > 0 && m_pEXIFReader->GetThumbnailHeight() > 0) {
 			bool bWHOrig = m_nInitOrigWidth > m_nInitOrigHeight;
 			bool bWHThumb = m_pEXIFReader->GetThumbnailWidth() > m_pEXIFReader->GetThumbnailHeight();
@@ -1417,7 +1408,7 @@ int CJPEGImage::GetRotationFromEXIF(int nOrigRotation) {
 				return nOrigRotation;
 			}
 		}
-
+*/
 		switch (m_pEXIFReader->GetImageOrientation()) {
 			case 1:
 				m_bRotationByEXIF = true;

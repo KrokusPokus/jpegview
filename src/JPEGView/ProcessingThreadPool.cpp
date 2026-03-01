@@ -78,7 +78,7 @@ bool CProcessingThreadPool::Process(CProcessingRequest* pRequest) {
 	if (m_nNumThreads == 0) {
 		CProcessingThread::DoProcess(pRequest, 0, nTargetCY);
 	} else {
-		if (nTargetCX * nTargetCY < 100000 || nTargetCY <= 12) {
+		if (nTargetCX * nTargetCY < 100000 || nTargetCY < 2 * pRequest->StripPadding) { // https://github.com/sylikc/jpegview/pull/290
 			CProcessingThread::DoProcess(pRequest, 0, nTargetCY);
 		} else {
 			// Important: All slices must have a height dividable by 'StripPadding', except the last one
@@ -87,6 +87,7 @@ bool CProcessingThreadPool::Process(CProcessingRequest* pRequest) {
 			while ((nSliceCY = ~(pRequest->StripPadding - 1) & (nTargetCY / nNumThreadsUsed)) < pRequest->StripPadding) {
 				nNumThreadsUsed--;
 			}
+			assert(nNumThreadsUsed > 1);	// https://github.com/sylikc/jpegview/pull/290
 			int nLastCY = nTargetCY - (nNumThreadsUsed - 1)*nSliceCY;
 			volatile LONG nRequestThreadCounter = nNumThreadsUsed - 1;
 			int nCurrCY = 0;

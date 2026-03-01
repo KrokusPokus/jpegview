@@ -51,7 +51,15 @@ public:
 		POS_Current,
 		POS_Clipboard,
 		POS_Toggle,
-		POS_AwayFromCurrent
+		POS_AwayFromCurrent,
+		POS_Next_100,
+		POS_Previous_100,
+		POS_Next_Folder,
+		POS_Previous_Folder,
+		//exit manga archive to next/previous image:
+		POS_Next_Image,
+		POS_Previous_Image,
+		POS_Goto_Image_Num
 	};
 
 	CMainDlg(bool bForceFullScreen);
@@ -89,6 +97,9 @@ public:
 		MESSAGE_HANDLER(WM_CLOSE, OnClose)
 		MESSAGE_HANDLER(WM_LOAD_FILE_ASYNCH, OnLoadFileAsynch)
 		MESSAGE_HANDLER(WM_COPYDATA, OnAnotherInstanceStarted) 
+/*GF*/	MESSAGE_HANDLER(WM_RBUTTONDBLCLK, OnRButtonDown)
+/*GF*/	MESSAGE_HANDLER(WM_MBUTTONDBLCLK, OnMButtonDown)
+/*GF*/	MESSAGE_HANDLER(WM_REFRESHVIEW, OnRefreshView)		// (to refresh the view from another app when window is not in foreground)
 		COMMAND_ID_HANDLER(IDOK, OnOK)
 		COMMAND_ID_HANDLER(IDCANCEL, OnCancel)
 	END_MSG_MAP()
@@ -131,6 +142,7 @@ public:
 	LRESULT OnAnotherInstanceStarted(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/);
 	LRESULT OnLoadFileAsynch(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/);
 	LRESULT OnClose(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/);
+/*GF*/	LRESULT OnRefreshView(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& /*bHandled*/);
 
 	// Called by main()
 	void SetStartupInfo(LPCTSTR sStartupFile, int nAutostartSlideShow, Helpers::ESorting eSorting, Helpers::ETransitionEffect eEffect, 
@@ -193,7 +205,7 @@ public:
 	void DisplayFileName(const CRect& imageProcessingArea, CDC& dc, double realizedZoom);
 	void BlendBlackRect(CDC & targetDC, CPanel& panel, float fBlendFactor);
 
-	void UpdateWindowTitle();
+	void UpdateWindowTitle(bool bForce);
 	void MouseOff();
 	void MouseOn();
 	void GotoImage(EImagePosition ePos);
@@ -361,7 +373,7 @@ private:
 	void InitParametersForNewImage();
 	void ExchangeProcessingParams();
 	void SaveParameters();
-	void AfterNewImageLoaded(bool bSynchronize, bool bAfterStartup, bool noAdjustWindow);
+	void AfterNewImageLoaded(bool bSynchronize, bool bAfterStartup, bool noAdjustWindow, bool bMoveBack = false);
 	CRect ScreenToDIB(const CSize& sizeDIB, const CRect& rect);
 	void ToggleMonitor();
 	CRect GetZoomTextRect(CRect imageProcessingArea);
@@ -382,4 +394,27 @@ private:
 	void AdjustAnimationFrameTime();
 	void StopAnimation();
 	void ToggleAlwaysOnTop();
+
+/*##################################################################*/
+/* Custom private functions and variables of the linear scaling mod */
+/*##################################################################*/
+	HMODULE m_hmodDwmapi;
+	BOOL m_bDWMenabled;
+	typedef HRESULT (WINAPI *MyDwmIsCompositionEnabledType)(BOOL*);
+	typedef HRESULT (WINAPI *MyDwmFlushType)(void);
+	MyDwmFlushType m_DynDwmFlush;
+
+	WINDOWPLACEMENT m_storedWindowPlacement2;	// position for windowed mode
+	bool m_bShowInfo;
+	bool m_bPanTimerActive;
+	int m_nBookModePageHeight;
+	CPoint m_offsets_custom;
+
+	void ChangeFolderLanguage();
+	void OpenDefaultEditor();
+
+	CString ReplaceNoCase(LPCTSTR instr,LPCTSTR oldstr,LPCTSTR newstr);
+	CString LoadBookmark(LPCTSTR sFilePath);
+	void SaveBookmark();
+	bool IsBookModeFile(LPCTSTR sFilePath);
 };

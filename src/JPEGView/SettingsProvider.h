@@ -71,7 +71,7 @@ public:
 	Helpers::ETransitionEffect SlideShowTransitionEffect() { return m_eSlideShowTransitionEffect; }
 	int SlideShowEffectTimeMs() { return m_nSlideShowEffectTimeMs; }
 	bool ForceGDIPlus() { return m_bForceGDIPlus; }
-	bool SingleInstance() { return m_bSingleInstance; }
+	Helpers::ESingleInstanceMode SingleInstanceMode() { return m_eSingleInstanceMode; }
 	bool SingleFullScreenInstance() { return m_bSingleFullScreenInstance; }
 	int JPEGSaveQuality() { return m_nJPEGSaveQuality; }
 	int WEBPSaveQuality() { return m_nWEBPSaveQuality; }
@@ -183,6 +183,12 @@ public:
 	// Get the file name (without path) of the user INI file
 	LPCTSTR GetINIFileTitle() { return m_sIniFileTitle; }
 
+/*GF*/	int BookModePageHeight() { return m_nBookModePageHeight; }
+/*GF*/	bool BookModeLaunchFullscreen() { return m_bBookModeLaunchFullscreen; }
+/*GF*/	bool UseSmoothScrolling() { return m_bUseSmoothScrolling; }
+/*GF*/	bool SmartPanningKeys() { return m_bSmartPanningKeys; }
+/*GF*/	bool TitleBarUseFileIcon() { return m_bTitleBarUseFileIcon; }
+
 private:
 	static CSettingsProvider* sm_instance;
 	CString m_sEXEPath;
@@ -242,7 +248,7 @@ private:
 	Helpers::ETransitionEffect m_eSlideShowTransitionEffect;
 	int m_nSlideShowEffectTimeMs;
 	bool m_bForceGDIPlus;
-	bool m_bSingleInstance;
+	Helpers::ESingleInstanceMode m_eSingleInstanceMode;
 	bool m_bSingleFullScreenInstance;
 	int m_nJPEGSaveQuality;
 	int m_nWEBPSaveQuality;
@@ -337,4 +343,10 @@ private:
 	void WriteInt(LPCTSTR sKey, int nValue);
 
 	CSettingsProvider(void);
+
+/*GF*/	int m_nBookModePageHeight;
+/*GF*/	bool m_bBookModeLaunchFullscreen;
+/*GF*/	bool m_bUseSmoothScrolling;
+/*GF*/	bool m_bSmartPanningKeys;
+/*GF*/	bool m_bTitleBarUseFileIcon;
 };

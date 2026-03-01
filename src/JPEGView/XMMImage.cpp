@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "XMMImage.h"
 #include "Helpers.h"
+#include "LookupTables.h"	// needed for sRGB8_LinRGB12[256]
 
 CXMMImage::CXMMImage(int nWidth, int nHeight, int padding) {
 	Init(nWidth, nHeight, false, padding);
@@ -10,6 +11,7 @@ CXMMImage::CXMMImage(int nWidth, int nHeight, bool bPadHeight, int padding) {
 	Init(nWidth, nHeight, bPadHeight, padding);
 }
 
+//GF: version for f32 SSE & AVX2
 CXMMImage::CXMMImage(int nWidth, int nHeight, int nFirstX, int nLastX, int nFirstY, int nLastY, 
 	const void* pDIB, int nChannels, int padding) {
 	int nSectionWidth = nLastX - nFirstX + 1;
@@ -19,7 +21,7 @@ CXMMImage::CXMMImage(int nWidth, int nHeight, int nFirstX, int nLastX, int nFirs
 	if (m_pMemory != NULL) {
 		int nSrcLineWidthPadded = Helpers::DoPadding(nWidth * nChannels, 4);
 		const uint8* pSrc = (uint8*)pDIB + (long long)nFirstY*(long long)nSrcLineWidthPadded + (long long)nFirstX*(long long)nChannels;
-		uint16* pDst = (unsigned short*) m_pMemory;
+		float* pDst = (float*) m_pMemory;
 		for (int j = 0; j < nSectionHeight; j++) {
 			if (nChannels == 4) {
 				for (int i = 0; i < nSectionWidth; i++) {
@@ -28,22 +30,22 @@ CXMMImage::CXMMImage(int nWidth, int nHeight, int nFirstX, int nLastX, int nFirs
 					uint32 nBlue = sourcePixel & 0xFF;
 					uint32 nGreen = (sourcePixel >> 8) & 0xFF;
 					uint32 nRed = (sourcePixel >> 16) & 0xFF;
-					// The commented out code actually is worse than the simple shift for precision of the fixed point arithmetic
-					pDst[d] = ((uint16)nBlue << 6); // ((((uint16)nBlue) << 8) + nBlue) >> 2;
+
+					pDst[d] = ((float)sRGB8_LinRGB12[nBlue]);
 					d += m_nPaddedWidth;
-					pDst[d] = ((uint16)nGreen << 6); //((((uint16) nGreen) << 8) + nGreen) >> 2;
+					pDst[d] = ((float)sRGB8_LinRGB12[nGreen]);
 					d += m_nPaddedWidth;
-					pDst[d] = ((uint16)nRed << 6); //((((uint16) nRed) << 8) + nRed) >> 2;
+					pDst[d] = ((float)sRGB8_LinRGB12[nRed]);
 				}
 			} else {
 				for (int i = 0; i < nSectionWidth; i++) {
 					int s = i*3;
 					int d = i;
-					pDst[d] = ((uint16)pSrc[s] << 6);//((((uint16) pSrc[s]) << 8) + pSrc[s]) >> 2;
+					pDst[d] = ((float)sRGB8_LinRGB12[pSrc[s]]);
 					d += m_nPaddedWidth;
-					pDst[d] = ((uint16)pSrc[s+1] << 6);//((((uint16) pSrc[s+1]) << 8) + pSrc[s+1]) >> 2;
+					pDst[d] = ((float)sRGB8_LinRGB12[pSrc[s+1]]);
 					d += m_nPaddedWidth;
-					pDst[d] = ((uint16)pSrc[s+2] << 6);//((((uint16) pSrc[s+2]) << 8) + pSrc[s+2]) >> 2;
+					pDst[d] = ((float)sRGB8_LinRGB12[pSrc[s+2]]);
 				}
 			}
 			pDst += 3*m_nPaddedWidth;

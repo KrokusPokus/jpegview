@@ -7,4 +7,4 @@ struct AVXFilterKernelBlock;
 CXMMImage* ApplyFilter_AVX(int nSourceHeight, int nTargetHeight, int nWidth,
 	int nStartY_FP, int nStartX, int nIncrementY_FP,
 	const AVXFilterKernelBlock& filter,
-	int nFilterOffset, const CXMMImage* pSourceImg);
+	int nFilterOffset, const CXMMImage* pSourceImg, bool bRoundResult);

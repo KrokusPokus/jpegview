@@ -225,7 +225,7 @@ bool CImageProcPanelCtl::RenameCurrentFile(LPCTSTR sNewFileTitle) {
 	if (m_pMainDlg->GetEXIFDisplayCtl()->IsActive() || m_pMainDlg->IsShowFileName()) {
 		InvalidateMainDlg();
 	}
-	m_pMainDlg->UpdateWindowTitle();
+	m_pMainDlg->UpdateWindowTitle(false);
 	return false;
 }
 

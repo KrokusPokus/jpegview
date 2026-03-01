@@ -7,7 +7,7 @@
 // if a define is to be included in the publicly-exposed definitions, start the comment with ":KeyMap:"
 // don't worry about the formatting, the script that auto-generates the definition will take care of it
 
-#define JPEGVIEW_VERSION "1, 3, 46, 0\0"
+#define JPEGVIEW_VERSION "1.4.0.0\0"
 // title for main window and msgbox so it can be change via actions
 #define JPEGVIEW_TITLE "JPEGView"
 
@@ -254,10 +254,19 @@
 #define IDM_ZOOM_INC		12100		// :KeyMap: zoom in
 #define IDM_ZOOM_DEC		12200		// :KeyMap: zoom out
 #define IDM_ZOOM_MODE		12300
-#define IDM_AUTO_ZOOM_FIT_NO_ZOOM	12500		// :KeyMap: set auto zoom mode fit to screen, never zoom
-#define IDM_AUTO_ZOOM_FILL_NO_ZOOM	12510		// :KeyMap: set auto zoom mode fill screen, never zoom
-#define IDM_AUTO_ZOOM_FIT	12520		// :KeyMap: set auto zoom mode fit to screen
-#define IDM_AUTO_ZOOM_FILL	12530		// :KeyMap: set auto zoom mode fill screen
+
+#define IDM_TOGGLE_SORT_RANDOM	12450		// :KeyMap: toggle between random and name sort
+#define IDM_TOGGLE_INFO_OVERLAY	12452		// :KeyMap: toggle custom overlay
+#define IDM_CHANGE_FOLDER_LANGUAGE	12453	// :KeyMap: jump between different language folders (varying in endings like " [en]", " [de]", " [ko]")
+#define IDM_OPEN_DEFAULT_EDITOR		12454	// :KeyMap: open image with default registry edit action of this file type
+#define IDM_TOGGLE_AUTO_ZOOM_FIT	12455	// :KeyMap: toggle auto zoom mode "BookMode (Default) <-> Fit " and "Fit (Default) <-> None"
+
+#define IDM_AUTO_ZOOM_NONE	12500		// :KeyMap: set auto zoom mode disabled
+#define IDM_AUTO_ZOOM_FIT_NO_ZOOM	12510		// :KeyMap: set auto zoom mode fit to screen, never zoom
+#define IDM_AUTO_ZOOM_FILL_NO_ZOOM	12520		// :KeyMap: set auto zoom mode fill screen, never zoom
+#define IDM_AUTO_ZOOM_FIT	12530		// :KeyMap: set auto zoom mode fit to screen
+#define IDM_AUTO_ZOOM_FILL	12540		// :KeyMap: set auto zoom mode fill screen
+#define IDM_AUTO_ZOOM_BOOK_MODE	12550		// :KeyMap: set auto zoom mode to book mode
 #define IDM_EDIT_GLOBAL_CONFIG 12600		// :KeyMap: edit global configuration
 #define IDM_EDIT_USER_CONFIG   12610		// :KeyMap: edit user configuration
 #define IDM_MANAGE_OPEN_WITH_MENU 12612

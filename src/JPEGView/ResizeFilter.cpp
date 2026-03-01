@@ -37,82 +37,101 @@ static void NormalizeFilter(int16* pFilter, int nLen) {
 // Filter kernel evaluation
 //////////////////////////////////////////////////////////////////////////////////////
 
-// dSharpen = 0.07 means no sharpening
-// Piecewise quadratic sinc like filter, support is [-1.5, 1.5], 3 taps
-static inline double EvaluateCore_Narrow(double dX, double dSharpen) {
-	if (dX < -1.5 || dX > 1.5) {
-		return 0.0;
-	}
-	else if (dX < -0.5) {
-		double dTemp = 2 * dX + 2;
-		return -dSharpen*(1 - dTemp*dTemp);
-	}
-	else if (dX < 0.5) {
-		double dTemp = 2 * dX;
-		return 1 - dTemp*dTemp;
-	}
-	else {
-		double dTemp = 2 * dX - 2;
-		return -dSharpen*(1 - dTemp*dTemp);
-	}
-}
+// Cubic Filter Family: Mitchell-Netravali filters (BC-splines)
 
-// dSharpen = 0.15 means no sharpening
-// Piecewise quadratic sinc like filter, support is [-2.0, 2.0], 3 taps
-static inline double EvaluateCore_BestQuality(double dX, double dSharpen) {
-	if (dX < -2 || dX > 2) {
+// Hermite (B=0, C=0)
+static inline double EvaluateCore_Hermite(double dX)
+	{
+	const double ParamB = 0.0;
+	const double ParamC = 0.0;
+	
+	if (abs(dX) < 1)
+		{
+		return (((12 - 9*ParamB - 6*ParamC) * abs(dX*dX*dX)) + ((-18 + 12*ParamB + 6*ParamC) * (dX*dX)) + (6 - 2*ParamB)) / 6.0;
+		}
+// GF: Not needed. Hermite' has the smallest support ('1.0') of all the BC Cubic filters, and does not contain a negative lobe.
+//	else if (abs(dX) < 2)
+//		return (((-ParamB - 6*ParamC) * abs(dX*dX*dX)) + ((6*ParamB + 30*ParamC) * (dX*dX)) + (((-12 * ParamB) - (48 * ParamC)) * abs(dX)) + (8*ParamB + 24*ParamC)) / 6.0;
+	else
+		{
 		return 0.0;
+		}
 	}
-	else if (dX < -1) {
-		double dTemp = 2 * dX + 3;
-		return -dSharpen*(1 - dTemp*dTemp);
-	}
-	else if (dX < 1) {
-		return 1 - dX*dX;
-	}
-	else {
-		double dTemp = 2 * dX - 3;
-		return -dSharpen*(1 - dTemp*dTemp);
-	}
-}
 
-#define PI 3.14159265358979323846
+// Mitchell (B=1/3, C=1/3)
+static inline double EvaluateCore_Mitchell(double dX)
+	{
+	const double ParamB = 1.0/3.0;
+	const double ParamC = 1.0/3.0;
+	
+	if (abs(dX) < 1)
+		{
+		return (((12 - 9*ParamB - 6*ParamC) * abs(dX*dX*dX)) + ((-18 + 12*ParamB + 6*ParamC) * (dX*dX)) + (6 - 2*ParamB)) / 6.0;
+		}
+	else if (abs(dX) < 2)
+		{
+		return (((-ParamB - 6*ParamC) * abs(dX*dX*dX)) + ((6*ParamB + 30*ParamC) * (dX*dX)) + (((-12 * ParamB) - (48 * ParamC)) * abs(dX)) + (8*ParamB + 24*ParamC)) / 6.0;
+		}
+	else
+		{
+		return 0.0;
+		}
+	}
+
+// Catrom (B=0, C=0.5)
+static inline double EvaluateCore_Catrom(double dX)
+	{
+	const double ParamB = 0.0;
+	const double ParamC = 0.5;
+	
+	if (abs(dX) < 1)
+		{
+		return (((12 - 9*ParamB - 6*ParamC) * abs(dX*dX*dX)) + ((-18 + 12*ParamB + 6*ParamC) * (dX*dX)) + (6 - 2*ParamB)) / 6.0;
+		}
+	else if (abs(dX) < 2)
+		{
+		return (((-ParamB - 6*ParamC) * abs(dX*dX*dX)) + ((6*ParamB + 30*ParamC) * (dX*dX)) + (((-12 * ParamB) - (48 * ParamC)) * abs(dX)) + (8*ParamB + 24*ParamC)) / 6.0;
+		}
+	else
+		{
+		return 0.0;
+		}
+	}
+
+#define PI 3.141592653
 #define PI_DIV_2 (PI/2)
 #define PI_SQR (PI*PI)
 
-// dSharpen = 1.0 means no sharpening
-// Lanczos filter, support is [-2.0, 2.0]
-static inline double EvaluateCore_NoAliasing(double dX, double dSharpen) {
-	// this is a Lanczos filter
-	if (dX < -2 || dX > 2) {
-		return 0.0;
-	}
-	else if (abs(dX) < 1e-6) {
+// 2-lobe Lanczos filter (Equivalent to IM Lanczos2, support is [-2.0, 2.0]
+static inline double EvaluateCore_Lanczos2(double dX) {
+	if (abs(dX) < 1e-6) {
 		return 1.0;
 	}
-	else if (dX > -1 && dX < 1) {
+	else if (abs(dX) < 2) {
 		return (2 * sin(PI*dX)*sin(PI_DIV_2*dX)) / (PI_SQR*dX*dX);
 	}
 	else {
-		return dSharpen*(2 * sin(PI*dX)*sin(PI_DIV_2*dX)) / (PI_SQR*dX*dX);
+		return 0.0;
 	}
 }
 
 // Evaluate a filter kernel at position dX. The filter kernel is assumed to have zero solutions at
 // integer values and is centered around zero.
-// dSharpen is a parameter that is used to control scaling of the negative pads of the filter kernel,
-// resulting in increased sharpening effect.
-static double inline EvaluateKernel(double dX, double dSharpen, EFilterType eFilter) {
+static double inline EvaluateKernel(double dX, EFilterType eFilter) {
 	switch (eFilter) {
-	case Filter_Downsampling_Best_Quality:
-		return EvaluateCore_BestQuality(dX, dSharpen);
+	case Filter_Downsampling_Hermite:
+		return EvaluateCore_Hermite(dX);
 		break;
-	case Filter_Downsampling_No_Aliasing:
-		return EvaluateCore_NoAliasing(dX, dSharpen);
+	case Filter_Downsampling_Mitchell:
+		return EvaluateCore_Mitchell(dX);
 		break;
-	case Filter_Downsampling_Narrow:
-		return EvaluateCore_Narrow(dX, dSharpen);
+	case Filter_Downsampling_Catrom:
+		return EvaluateCore_Catrom(dX);
 		break;
+	case Filter_Downsampling_Lanczos2:
+		return EvaluateCore_Lanczos2(dX);
+		break;
+
 	}
 	return 0.0;
 }
@@ -120,7 +139,7 @@ static double inline EvaluateKernel(double dX, double dSharpen, EFilterType eFil
 // Evaluation of filter kernel using an integration over the source pixel width.
 // This implements a convolution of a box filter with the filter kernel.
 // Note that dX is given in the source pixel space
-static double EvaluateKernelIntegrated(double dX, EFilterType eFilter, double dMultX, double dSharpen) {
+static double EvaluateKernelIntegrated(double dX, EFilterType eFilter, double dMultX) {
 	double dXScaled = dX*dMultX;
 
 	// take integral of target function from [dX - 0.5, dX + 0.5]
@@ -129,32 +148,38 @@ static double EvaluateKernelIntegrated(double dX, EFilterType eFilter, double dM
 	double dStepX = dMultX*(1.0 / (NUM_STEPS - 1));
 	double dSum = 0.0;
 	for (int i = 0; i < NUM_STEPS; i++) {
-		dSum += EvaluateKernel(dStartX, dSharpen, eFilter);
+		dSum += EvaluateKernel(dStartX, eFilter);
 		dStartX += dStepX;
 	}
 	return dSum;
 }
 
+
 static double EvaluateCubicFilterKernel(double dFrac, int nKernelElement) {
-	const double cdFactorA = -0.5;
+	//GF: This original version was using Catrom for upscaling
+
+	// Cubic Spline (emulates gaussian, but is faster)
+	//const double ParamB = 1.0;
+	//const double ParamC = 0.0;
+
+	// Catrom
+	const double ParamB = 0.0;
+	const double ParamC = 0.5;
+
 	double dAbsDiff;
 	switch (nKernelElement) {
 	case 0:
 		dAbsDiff = 1.0 + dFrac;
-		return cdFactorA*dAbsDiff*dAbsDiff*dAbsDiff - 5 * cdFactorA*dAbsDiff*dAbsDiff +
-			8 * cdFactorA*dAbsDiff - 4 * cdFactorA;
+		return (((-ParamB - 6*ParamC) * abs(dAbsDiff*dAbsDiff*dAbsDiff)) + ((6*ParamB + 30*ParamC) * (dAbsDiff*dAbsDiff)) + (((-12 * ParamB) - (48 * ParamC)) * abs(dAbsDiff)) + (8*ParamB + 24*ParamC)) / 6.0;
 	case 1:
 		dAbsDiff = dFrac;
-		return (cdFactorA + 2)*dAbsDiff*dAbsDiff*dAbsDiff -
-			(cdFactorA + 3)*dAbsDiff*dAbsDiff + 1;
+		return (((12 - 9*ParamB - 6*ParamC) * abs(dAbsDiff*dAbsDiff*dAbsDiff)) + ((-18 + 12*ParamB + 6*ParamC) * (dAbsDiff*dAbsDiff)) + (6 - 2*ParamB)) / 6.0;
 	case 2:
 		dAbsDiff = (1.0 - dFrac);
-		return (cdFactorA + 2)*dAbsDiff*dAbsDiff*dAbsDiff -
-			(cdFactorA + 3)*dAbsDiff*dAbsDiff + 1;
+		return (((12 - 9*ParamB - 6*ParamC) * abs(dAbsDiff*dAbsDiff*dAbsDiff)) + ((-18 + 12*ParamB + 6*ParamC) * (dAbsDiff*dAbsDiff)) + (6 - 2*ParamB)) / 6.0;
 	case 3:
 		dAbsDiff = 1.0 + (1.0 - dFrac);
-		return cdFactorA*dAbsDiff*dAbsDiff*dAbsDiff - 5 * cdFactorA*dAbsDiff*dAbsDiff +
-			8 * cdFactorA*dAbsDiff - 4 * cdFactorA;
+		return (((-ParamB - 6*ParamC) * abs(dAbsDiff*dAbsDiff*dAbsDiff)) + ((6*ParamB + 30*ParamC) * (dAbsDiff*dAbsDiff)) + (((-12 * ParamB) - (48 * ParamC)) * abs(dAbsDiff)) + (8*ParamB + 24*ParamC)) / 6.0;
 	}
 	return -1;
 }
@@ -318,6 +343,7 @@ void CResizeFilter::CalculateFilterKernels() {
 	m_kernels.NumKernels = nIdxBorderKernel;
 }
 
+// GF version with 4 x float32 (instead of 8 x int16)
 void CResizeFilter::CalculateXMMFilterKernels() {
 	CalculateFilterKernels();
 	if (m_nTargetSize == 0) {
@@ -330,12 +356,12 @@ void CResizeFilter::CalculateXMMFilterKernels() {
 	for (int i = 0; i < m_kernels.NumKernels; i++) {
 		nTotalKernelElements += m_kernels.Kernels[i].FilterLen;
 	}
-	uint32 nSizeOfKernels = m_kernels.NumKernels * 16 + sizeof(XMMKernelElement) * nTotalKernelElements;
+	uint32 nSizeOfKernels = m_kernels.NumKernels * 32 + sizeof(XMMKernelElement) * nTotalKernelElements;
 
 	m_kernelsXMM.NumKernels = m_kernels.NumKernels;
 	m_kernelsXMM.Indices = new XMMFilterKernel*[m_nTargetSize];
-	m_kernelsXMM.UnalignedMemory = new uint8[nSizeOfKernels + 15];
-	m_kernelsXMM.Kernels = (XMMFilterKernel*)(((PTR_INTEGRAL_TYPE)m_kernelsXMM.UnalignedMemory + 15) & ~15);
+	m_kernelsXMM.UnalignedMemory = new uint8[nSizeOfKernels + 31];
+	m_kernelsXMM.Kernels = (XMMFilterKernel*)(((PTR_INTEGRAL_TYPE)m_kernelsXMM.UnalignedMemory + 31) & ~31);
 	memset(m_kernelsXMM.Kernels, 0, nSizeOfKernels);
 
 	// create an array of the start address of the filter kernels
@@ -348,11 +374,11 @@ void CResizeFilter::CalculateXMMFilterKernels() {
 		pCurKernelXMM->FilterLen = nCurFilterLen;
 		pCurKernelXMM->FilterOffset = m_kernels.Kernels[i].FilterOffset;
 		for (int j = 0; j < nCurFilterLen; j++) {
-			for (int k = 0; k < 8; k++) {
-				pCurKernelXMM->Kernel[j].valueRepeated[k] = m_kernels.Kernels[i].Kernel[j];
+			for (int k = 0; k < 4; k++) {
+				pCurKernelXMM->Kernel[j].valueRepeated[k] = (((float)(m_kernels.Kernels[i].Kernel[j])) / (float)FP_ONE);	// so output should be [0.0...1.0]
 			}
 		}
-		pCurKernelXMM = (XMMFilterKernel*) ((PTR_INTEGRAL_TYPE)pCurKernelXMM + 16 + sizeof(XMMKernelElement)*nCurFilterLen);
+		pCurKernelXMM = (XMMFilterKernel*) ((PTR_INTEGRAL_TYPE)pCurKernelXMM + 32 + sizeof(XMMKernelElement)*nCurFilterLen);
 	}
 
 	for (int i = 0; i < m_nTargetSize; i++) {
@@ -363,6 +389,7 @@ void CResizeFilter::CalculateXMMFilterKernels() {
 	delete[] pKernelStartAddress;
 }
 
+// GF version with 8 x float32
 void CResizeFilter::CalculateAVXFilterKernels() {
 	CalculateFilterKernels();
 	if (m_nTargetSize == 0) {
@@ -375,12 +402,12 @@ void CResizeFilter::CalculateAVXFilterKernels() {
 	for (int i = 0; i < m_kernels.NumKernels; i++) {
 		nTotalKernelElements += m_kernels.Kernels[i].FilterLen;
 	}
-	uint32 nSizeOfKernels = m_kernels.NumKernels * 32 + sizeof(AVXKernelElement)* nTotalKernelElements;
+	uint32 nSizeOfKernels = m_kernels.NumKernels * 64 + sizeof(AVXKernelElement)* nTotalKernelElements;
 
 	m_kernelsAVX.NumKernels = m_kernels.NumKernels;
 	m_kernelsAVX.Indices = new AVXFilterKernel*[m_nTargetSize];
-	m_kernelsAVX.UnalignedMemory = new uint8[nSizeOfKernels + 31];
-	m_kernelsAVX.Kernels = (AVXFilterKernel*)(((PTR_INTEGRAL_TYPE)m_kernelsAVX.UnalignedMemory + 31) & ~31);
+	m_kernelsAVX.UnalignedMemory = new uint8[nSizeOfKernels + 63];
+	m_kernelsAVX.Kernels = (AVXFilterKernel*)(((PTR_INTEGRAL_TYPE)m_kernelsAVX.UnalignedMemory + 63) & ~63);
 	memset(m_kernelsAVX.Kernels, 0, nSizeOfKernels);
 
 	// create an array of the start address of the filter kernels
@@ -393,11 +420,11 @@ void CResizeFilter::CalculateAVXFilterKernels() {
 		pCurKernelAVX->FilterLen = nCurFilterLen;
 		pCurKernelAVX->FilterOffset = m_kernels.Kernels[i].FilterOffset;
 		for (int j = 0; j < nCurFilterLen; j++) {
-			for (int k = 0; k < 16; k++) {
-				pCurKernelAVX->Kernel[j].valueRepeated[k] = m_kernels.Kernels[i].Kernel[j];
+			for (int k = 0; k < 8; k++) {
+				pCurKernelAVX->Kernel[j].valueRepeated[k] = (((float)(m_kernels.Kernels[i].Kernel[j])) / (float)FP_ONE);	// so output should be [0.0...1.0]
 			}
 		}
-		pCurKernelAVX = (AVXFilterKernel*)((PTR_INTEGRAL_TYPE)pCurKernelAVX + 32 + sizeof(AVXKernelElement)*nCurFilterLen);
+		pCurKernelAVX = (AVXFilterKernel*) ((PTR_INTEGRAL_TYPE)pCurKernelAVX + 64 + sizeof(AVXKernelElement)*nCurFilterLen);
 	}
 
 	for (int i = 0; i < m_nTargetSize; i++) {
@@ -409,42 +436,34 @@ void CResizeFilter::CalculateAVXFilterKernels() {
 }
 
 void CResizeFilter::CalculateFilterParams(EFilterType eFilter) {
-	if (eFilter == Filter_Downsampling_Best_Quality) {
-		int nStdFilterLen = 4;
+	if (eFilter == Filter_Upsampling_Bicubic)
+		{
+		m_dMultX = 1.0;
+		m_nFilterLen = 4;
+		m_nFilterOffset = 1;
+		}
+/*	else if (eFilter == Filter_Downsampling_Hermite)
+		{
 		double dFactor = (double)m_nSourceSize/m_nTargetSize;
-		m_dMultX = (dFactor < 2) ? 1.0/(dFactor - 0.5) : 1.0/((dFactor + 1)*0.5);
-		m_nFilterLen = (int)(nStdFilterLen*((dFactor + 1)*0.5) + 0.99);
+		m_dMultX = 1.0/dFactor;
+		m_nFilterLen = (int) (2*dFactor);
 		m_nFilterLen = min(MAX_FILTER_LEN, m_nFilterLen);
 		m_nFilterOffset = (m_nFilterLen - 1)/2;
-		if (fabs(dFactor - 1) < 0.01) {
-			m_dSharpen = 0.0; // avoid to sharpen when no resizing
 		}
-	} else if (eFilter == Filter_Downsampling_No_Aliasing) {
+*/
+	else
+		{
 		double dFactor = (double)m_nSourceSize/m_nTargetSize;
 		m_dMultX = 1.0/dFactor;
 		m_nFilterLen = (int) (5*dFactor);
 		m_nFilterLen = min(MAX_FILTER_LEN, m_nFilterLen);
 		m_nFilterOffset = (m_nFilterLen - 1)/2;
-		m_dSharpen = 1 + m_dSharpen*7;
-	} else if (eFilter == Filter_Downsampling_Narrow) {
-		int nStdFilterLen = 4;
-		double dFactor = (double)m_nSourceSize/m_nTargetSize;
-		m_dMultX = 1.0/dFactor;
-		m_nFilterLen = (int)(nStdFilterLen*dFactor + 0.99);
-		m_nFilterLen = min(MAX_FILTER_LEN, m_nFilterLen);
-		m_nFilterOffset = (m_nFilterLen - 1)/2;
-		m_dSharpen /= 2;
-	} else if (eFilter == Filter_Upsampling_Bicubic) {
-		m_dMultX = 1.0;
-		m_nFilterLen = 4;
-		m_nFilterOffset = 1;
-	} else {
-		m_dMultX = 0.0;
-		m_nFilterLen = 0;
-		m_nFilterOffset = 0;
-	}
-}
 
+/* Debugging */	TCHAR debugtext[1024];
+/* Debugging */	swprintf(debugtext,1024,TEXT("[JpegView] CalculateFilterParams() dFactor=%f  m_dMultX=%f  m_nFilterLen=%d  m_nFilterOffset=%d"), dFactor, m_dMultX, m_nFilterLen, m_nFilterOffset);
+/* Debugging */	::OutputDebugStringW(debugtext);
+		}
+	}
 
 // Filter is normalized in fixed point format, sum of elements is FP_ONE
 // nFrac is fractional part (sub-pixel offset), coded in [0..65535] --> [0...1]
@@ -455,10 +474,8 @@ int16* CResizeFilter::GetFilter(uint16 nFrac, EFilterType eFilter) {
 	for (int i = 0; i < m_nFilterLen; i++) {
 		if (eFilter == Filter_Upsampling_Bicubic) {
 			dFilter[i] = EvaluateCubicFilterKernel(dFrac, i);
-		} else if (eFilter == Filter_Downsampling_No_Aliasing) {
-			dFilter[i] = EvaluateKernel(m_dMultX*(-m_nFilterOffset + i - dFrac), m_dSharpen, eFilter);
 		} else {
-			dFilter[i] = EvaluateKernelIntegrated(-m_nFilterOffset + i - dFrac, eFilter, m_dMultX, m_dSharpen);
+			dFilter[i] = EvaluateKernel(m_dMultX*(-m_nFilterOffset + i - dFrac), eFilter);
 		}
 		dSum += dFilter[i];
 	}

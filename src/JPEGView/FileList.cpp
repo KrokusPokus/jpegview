@@ -125,9 +125,9 @@ void CFileDesc::SetModificationDate(const FILETIME& lastModDate) {
 
 // image file types supported internally (there are additional endings for RAW and WIC - these come from INI file)
 // NOTE: when adding more supported filetypes, update installer to add another extension for "SupportedTypes"
-static const int cnNumEndingsInternal = 17;
+static const int cnNumEndingsInternal = 20;
 static const TCHAR* csFileEndingsInternal[cnNumEndingsInternal] = {_T("jpg"), _T("jpeg"), _T("jfif"), _T("bmp"), _T("png"),
-	_T("tif"), _T("tiff"), _T("gif"), _T("webp"), _T("jxl"), _T("avif"), _T("heif"), _T("heic"), _T("tga"), _T("qoi"), _T("psd"), _T("psb") };
+	_T("tif"), _T("tiff"), _T("gif"), _T("webp"), _T("jxl"), _T("avif"), _T("heif"), _T("heic"), _T("tga"), _T("qoi"), _T("psd"), _T("psb"), _T("ico"), _T("cbz"), _T("cb7") };
 // supported camera RAW formats
 static const TCHAR* csFileEndingsRAW = _T("*.pef;*.dng;*.crw;*.nef;*.cr2;*.mrw;*.rw2;*.orf;*.x3f;*.arw;*.kdc;*.nrw;*.dcr;*.sr2;*.raf");
 
@@ -996,4 +996,27 @@ bool CFileList::TryReadingSlideShowList(const CString & sSlideShowFile) {
 	fclose(fptr);
 	delete[] fileBuffOrig;
 	return true;
+}
+
+//#####################################################
+//# GF: Custom public functions of linear scaling mod #
+//#####################################################
+
+// Used by custom SaveBookmark()
+bool CFileList::IsEndpoint() {
+	m_nMarkedIndexShow = -1;
+
+	if (m_iter == m_fileList.begin())
+		return true;
+
+	if (m_fileList.size() > 0)
+		{
+		std::list<CFileDesc>::iterator iterTemp = m_iter;
+		iterTemp++;
+		if (iterTemp == m_fileList.end()) {
+			return true;
+		}
+	}
+
+	return false;
 }

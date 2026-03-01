@@ -10,9 +10,11 @@
 ; * These options control how JPEGView operates
 ; *****************************************************************************
 
-; If set to true, only one single instance of JPEGView runs at any time, if false multiple instances are allowed
-; Set to true to open all images in the same JPEGView window.
-SingleInstance=false
+; Limits how many instances of JPEGView are allowed to run in parallel. [Default: "PerFolder"]
+;  "Always"		Single instance. All images open in the same window of JPEGView.
+;  "PerFolder"	Images opened from different folders open in separate JPEGView windows.
+;  "Never"		Each image opened from the file manager gets its own JPEGView window.
+SingleInstance=PerFolder
 
 ; Set to true to skip the 'File Open' dialog when starting JPEGView without providing a file name as parameter
 SkipFileOpenDialogOnStartup=false
@@ -47,10 +49,18 @@ DisplayMonitor=-1
 ; CPUType can be AutoDetect, Generic, MMX, SSE or AVX2
 ; Generic should work on all CPUs, MMX needs at least MMX II (starting from PIII)
 ; Use AutoDetect to detect the best possible algorithm to use
-CPUType=AutoDetect
+; NOTE:
+;    "Generic"	Resamples in gamma space, like most other image viewers out there, so will give wrong results.
+;    "MMX"		Also resamples in gamma space, giving slightly wrong results.
+;				For reference: http://www.ericbrasseur.org/gamma.html 
+;    "SSE"		Resamples in linears space, for both up- and downsampling. For algorithms with negative lobes (like Catrom or Lanczos2), upsampling would be better off with a sigmoidal function.
+;    "AVX2"		This method is broken at this point in time and returns pink colored images.
+;          		Resamples in linear space, for both up- and downsampling.
+;				Only slightly faster than SSE. Bottleneck might be memory bandwidth or latency.
+CPUType=SSE
 
-; Number of CPU cores used. Set to 0 for auto detection.
-; Must be 1 to 4, or 0 for auto detect.
+; Number of CPU cores used. Must be 1 to 128, or 0 for auto detect.
+; There are diminishing returns in processing speed when going beyond 4. Memory bandwidth might be the limiting factor.
 CPUCoresUsed=0
 
 ; Editor for INI files
@@ -75,30 +85,46 @@ AllowFileDeletion=true
 ; * These options control how JPEGView looks
 ; *****************************************************************************
 
-; Language used in the user interface. Set to 'auto' to use the language of the operating system.
-; Other languages must use the ISO 639-1 language code (two letters)
-; Currently supported:
-; 'bel'   Belorussian
-; 'cs'    Czech
-; 'de'    German
-; 'el'    Greek
-; 'en'    English (default)
-; 'es'    Spanish (Spain)
-; 'es-ar' Spanish (latinoamerica)
-; 'eu'    Basque
-; 'fr'    French
-; 'it'    Italian
-; 'ja'    Japanese
-; 'ko'    Korean
-; 'pl'    Polish
-; 'pt'    Portuguese
-; 'pt-br' Portuguese (Brasil)
-; 'ro'    Romanian
-; 'ru'    Russian
-; 'sv'    Swedish
-; 'uk'    Ukrainian
-; 'zh'    Chinese
-; 'zh-tw' Chinese (Taiwan)
+; Specify language used in the user interface.
+;
+; Set to 'auto' to use the language of the operating system.
+;
+;   JPEGView will auto-detect and use the ISO 3166-1 country code (two letters) if the file exists:
+;     strings_<language>-<country>.txt
+;
+;   otherwise, fallback to just the ISO 639-1 language code if the file exists:
+;     strings_<language>.txt
+;
+; Currently supported languages:
+;  'be'    Belarusian
+;  'bg'    Bulgarian
+;  'cs'    Czech
+;  'de'    German
+;  'el'    Greek
+;  'en'    English (default)
+;  'es'    Spanish (Spain)
+;  'es-ar' Spanish (Argentina)
+;  'eu'    Basque
+;  'fi'    Finnish
+;  'fr'    French
+;  'hu'    Hungarian
+;  'it'    Italian
+;  'ja'    Japanese
+;  'ko'    Korean
+;  'pl'    Polish
+;  'pt'    Portuguese
+;  'pt-br' Portuguese (Brazil)
+;  'ro'    Romanian
+;  'ru'    Russian
+;  'sk'    Slovak
+;  'sl'    Slovenian
+;  'sr'    Serbian
+;  'sv'    Swedish
+;  'ta'    Tamil
+;  'tr'    Turkish
+;  'uk'    Ukrainian
+;  'zh'    Chinese, Simplified
+;  'zh-tw' Chinese, Traditional (Taiwan)
 Language=auto
 
 ; Background color, R G B, each component must be in [0..255], e.g. "128 128 128" for a middle gray
@@ -186,7 +212,7 @@ ScaleFactorNavPanel=1.0
 
 ; Sorting order of the files when displaying the image files in a folder
 ; Can be LastModDate, CreationDate, FileName, FileSize or Random
-FileDisplayOrder=LastModDate
+FileDisplayOrder=FileName
 
 ; Sort files ascending (increasing, e.g. A->Z, 0->9) or descending (decreasing, e.g. Z->A, 9->0)
 FileSortAscending=true
@@ -255,11 +281,12 @@ ReloadWhenDisplayedImageChanged=true
 ; Set to true to use high quality sampling as default.
 HighQualityResampling=true
 
-; DownSamplingFilter can be BestQuality, NoAliasing or Narrow
-; The BestQuality filter produces a very small amount of aliasing.
-; The NoAliasing filter is a Lanczos filter that has almost no aliasing when sharpen is set to zero
-; The Narrow filter produces quite a lot of aliasing but will sharpen much and also sharpens 100% images
-DownSamplingFilter=BestQuality
+; DownSamplingFilter can be None, Hermite, Mitchell, Catrom or Laczos2
+; Hermite (B=0, C=0)		Sharpness: 0, Ringing 0
+; Mitchell (B=1/3, C=1/3)	Sharpness: 1, Ringing 1
+; Catrom (B=0, C=0.5)		Sharpness: 2, Ringing 2
+; Lanczos2					Sharpness: 2, Ringing 2
+DownSamplingFilter=Catrom
 
 ; If true, JPEG images are auto rotated according to EXIF image orientation tag if present.
 AutoRotateEXIF=true
@@ -273,7 +300,8 @@ MinimalDisplayTime=0
 ForceGDIPlus=false
 
 ; If true, embedded ICC color profiles are used for JPEG, PNG and TIFF. This forces using GDI+ and therefore
-; results in much slower loading of JPEGs! Only set to true if you really need this.
+; results in much slower loading of images! Only set to true if you really need this.
+; (ICC color profiles are not supported for Animated PNG)
 UseEmbeddedColorProfiles=false
 
 ; -----------------------------------------------
@@ -288,10 +316,12 @@ TransparencyColor=0 0 0
 ; -----------------------------------------------
 
 ; Auto zoom mode (for window mode only if AutoZoomModeFullscreen is present)
+; None: Leave images at their original size
 ; FitNoZoom : Fit images to screen, never enlarge image
 ; FillNoZoom : Fill screen with no black borders, crop if necessary but not too much, never enlarge image
 ; Fit : Fit images to screen
 ; Fill : Fill screen with no black borders, crop if necessary
+; BookMode: Size images for (comic, manga, etc.) book reading purposes
 AutoZoomMode=FitNoZoom
 
 ; Auto zoom mode for fullscreen mode. If empty, same value as 'AutoZoomMode' is used.
@@ -332,8 +362,9 @@ Sharpen=0.3
 ; *****************************************************************************
 
 ; Default parameters for unsharp masking: Radius Amount Threshold
-; Note that no unsharp masking can be applied automatically to every image - this setting only provides the default parameters
-; when entering the unsharp mask mode
+; Note: unsharp masking cannot be applied automatically to every image
+;   This setting only provides the default parameters
+;   when entering the unsharp mask mode
 UnsharpMaskParameters=1.0 1.0 4.0
 
 ; Default parameters for controlling rotation and perspective correction
@@ -523,15 +554,15 @@ SlideShowEffectTime=250
 ; * These options control whether or not to bypass confimation dialogs
 ; *****************************************************************************
 
-; If set to true, Ctrl-S overrides the original file on disk, applying the current processings without
+; If set to true, Ctrl-S overwrites the original file on disk, applying the current processings without
 ; showing a dialog or prompting the user to confirm.
-; CAUTION: Use at your own risk! Be aware that the original image file is overridden and cannot be restored anymore!
+; CAUTION: Use at your own risk! Be aware that the original image file is overwritten and cannot be restored!
 OverwriteOriginalFileWithoutSaveDialog=false
 
-; If set to true, lossless JPEG transformations will trim the image as needed without prompting the user.
+; If set to true, lossless JPEG transformations will crop the image as needed without prompting the user.
 ; This will remove 15 pixel rows/columns at the image borders in worst case.
-; CAUTION: Use at your own risk! Be aware that the original image file is overridden and the trimmed borders cannot be restored anymore!
-TrimWithoutPromptLosslessJPEG=false
+; CAUTION: Use at your own risk! Be aware that the original image file is overwritten and the cropped borders cannot be restored!
+CropWithoutPromptLosslessJPEG=false
 
 ; Type of confirmation required when deleting a file with the 'x' button on the navigation panel
 ; Possible values: Never, OnlyWhenNoRecycleBin, Always
@@ -577,6 +608,36 @@ PrintWidth=-15.0
 ; 'metric' uses the metric system, e.g. centimeters for length
 ; 'english' uses the English/US system, e.g. inches for length
 Units=auto
+
+
+
+; *****************************************************************************
+; * New Settings
+; *
+; * These settings have been added in JPEGViewL
+; *****************************************************************************
+
+; Sources like CBZ/CBR/CB7 files or files in folders with "\manga\" or "\comics\" in their path have different behaviour for image placement and zoom:
+;	- They get opened in fullscreen mode on launch. Controlled by setting "BookModeLaunchFullscreen".
+;	- They react slightly different to navigation input of 'left', 'right', 'up', 'down' arrow keys.
+;	- They get centered on the top half of the image when moving forward and at the bottom half when moving backwards.
+;	- For double pages (e.g. when image width is larger than height), they get sized to fit the window width.
+;	- For single pages (e.g. when image width is smaller than height), their images get scaled by the percent value of the setting 'BookModePageHeight'.
+
+; How much larger than window height should book type sources be zoomed to. [100-1000. Default: 122, meaning 122% of window height]
+BookModePageHeight=122
+
+; Launch book type (CBZ/CBR/CB7 files and files in folders with "\manga\" or "\comics\" in their path fullscreen? [true/false. Default: true]
+BookModeLaunchFullscreen=true
+
+; Enable smooth scrolling on panning keys (IDM_PAN_UP, IDM_PAN_DOWN, IDM_PAN_LEFT, IDM_PAN_RIGHT)? [true/false. Default: true]
+SmoothScrolling=true
+
+; Should the panning keys navigate to next/previous image, when panning isn't available? [true/false. Default: true]
+SmartPanningKeys=true
+
+; Show current file type's icon instead of JpegView application icon in title bar? [true/false. Default: true]
+TitleBarUseFileIcon=true
 
 
 

@@ -137,22 +137,48 @@ CSettingsProvider::CSettingsProvider(void) {
 	else {
 		m_eCPUAlgorithm = Helpers::ProbeCPU();
 	}
-	m_nNumCores = GetInt(_T("CPUCoresUsed"), 0, 0, 4);
+	m_nNumCores = GetInt(_T("CPUCoresUsed"), 0, 0, 128);
 	if (m_nNumCores == 0) {
+/*
 		m_nNumCores = Helpers::NumCoresPerPhysicalProc();
 		if (m_nNumCores > 4) m_nNumCores = 4;
+*/
+		m_nNumCores = Helpers::NumConcurrentThreads();
 	}
 
-	CString sDownSampling = GetString(_T("DownSamplingFilter"), _T("BestQuality"));
-	if (sDownSampling.CompareNoCase(_T("NoAliasing")) == 0) {
-		m_eDownsamplingFilter = Filter_Downsampling_No_Aliasing;
+
+	CString sDownSampling = GetString(_T("DownSamplingFilter"), _T("Catrom"));
+	if (sDownSampling.CompareNoCase(_T("None")) == 0) {
+		m_eDownsamplingFilter = Filter_Downsampling_None;
 	}
-	else if (sDownSampling.CompareNoCase(_T("Narrow")) == 0) {
-		m_eDownsamplingFilter = Filter_Downsampling_Narrow;
+	else if (sDownSampling.CompareNoCase(_T("Hermite")) == 0) {
+		m_eDownsamplingFilter = Filter_Downsampling_Hermite;
+	}
+	else if (sDownSampling.CompareNoCase(_T("Mitchell")) == 0) {
+		m_eDownsamplingFilter = Filter_Downsampling_Mitchell;
+	}
+	else if (sDownSampling.CompareNoCase(_T("Catrom")) == 0) {
+		m_eDownsamplingFilter = Filter_Downsampling_Catrom;
+	}
+	else if (sDownSampling.CompareNoCase(_T("Lanczos2")) == 0) {
+		m_eDownsamplingFilter = Filter_Downsampling_Lanczos2;
 	}
 	else {
-		m_eDownsamplingFilter = Filter_Downsampling_Best_Quality;
+		m_eDownsamplingFilter = Filter_Downsampling_Catrom;
 	}
+
+
+	CString sSingleInstanceMode = GetString(_T("SingleInstance"), _T("PerFolder"));
+	if (sSingleInstanceMode.CompareNoCase(_T("Never")) == 0) {
+		m_eSingleInstanceMode = Helpers::SI_Never;
+	} else if (sSingleInstanceMode.CompareNoCase(_T("PerFolder")) == 0) {
+		m_eSingleInstanceMode = Helpers::SI_PerFolder;
+	} else if (sSingleInstanceMode.CompareNoCase(_T("Always")) == 0) {
+		m_eSingleInstanceMode = Helpers::SI_Always;
+	} else {
+		m_eSingleInstanceMode = Helpers::SI_PerFolder;
+	}
+
 
 	m_bNavigateMouseWheel = GetBool(_T("NavigateWithMouseWheel"), false);
 	m_dMouseWheelZoomSpeed = GetDouble(_T("MouseWheelZoomSpeed"), 1.0, 0.1, 10);
@@ -171,7 +197,6 @@ CSettingsProvider::CSettingsProvider(void) {
 	m_nMaxSlideShowFileListSize = GetInt(_T("MaxSlideShowFileListSizeKB"), 200, 100, 10000);
 	m_nSlideShowEffectTimeMs = GetInt(_T("SlideShowEffectTime"), 200, 100, 5000);
 	m_bForceGDIPlus = GetBool(_T("ForceGDIPlus"), false);
-	m_bSingleInstance = GetBool(_T("SingleInstance"), false);
 	m_bSingleFullScreenInstance = GetBool(_T("SingleFullScreenInstance"), true);
 	m_nJPEGSaveQuality = GetInt(_T("JPEGSaveQuality"), 85, 0, 100);
 	m_nWEBPSaveQuality = GetInt(_T("WEBPSaveQuality"), 85, 0, 100);
@@ -215,6 +240,21 @@ CSettingsProvider::CSettingsProvider(void) {
 		else if (sAuto.CompareNoCase(_T("sticky")) == 0) {
 			m_bStickyWindowSize = true;
 			m_bExplicitWindowRect = !m_stickyWindowRect.IsRectEmpty();
+		}
+		else {
+			RECT workAreaRect;
+			INT iBorderPosR = 0;
+			
+			HDC hdc = ::GetDC(NULL);
+			int ScreenDPI = GetDeviceCaps(hdc, LOGPIXELSX);
+			::ReleaseDC(NULL, hdc);
+
+			::SystemParametersInfo(SPI_GETWORKAREA, 0, &workAreaRect, 0);
+
+			iBorderPosR = (int(floor(((workAreaRect.right - floor(((256.0*(workAreaRect.right-workAreaRect.left))/1920) + 0.5))/32.0)+0.5))) * 32;
+
+			// left, top, right, bottom
+			m_defaultWindowRect = CRect((workAreaRect.right-iBorderPosR),workAreaRect.top,iBorderPosR,workAreaRect.bottom);
 		}
 	}
 	else {
@@ -334,6 +374,14 @@ CSettingsProvider::CSettingsProvider(void) {
 
 	m_DefaultFixedCropSize = GetSize(_T("DefaultFixedCropSize"), CSize(320, 200));
 
+// -------------------------------------------------------------------------------------------
+// [GF] Custom non-writable ini settings of this mod
+	m_bBookModeLaunchFullscreen = GetBool(_T("BookModeLaunchFullscreen"), true);
+	m_bUseSmoothScrolling = GetBool(_T("SmoothScrolling"), true);
+	m_bSmartPanningKeys = GetBool(_T("SmartPanningKeys"), true);
+	m_bTitleBarUseFileIcon = GetBool(_T("TitleBarUseFileIcon"), true);
+// -------------------------------------------------------------------------------------------
+
 	// read all user commands
 	CString sCmd;
 	int nIndex = 0;
@@ -370,7 +418,6 @@ CSettingsProvider::CSettingsProvider(void) {
 			nGapIndex++;
 		}
 	} while (nGapIndex <= 2);
-	
 }
 
 CImageProcessingParams CSettingsProvider::LandscapeModeParams(const CImageProcessingParams& templParams) {
@@ -440,11 +487,18 @@ void CSettingsProvider::ReadWriteableINISettings() {
 	m_bShowNavPanel = GetBool(_T("ShowNavPanel"), true);
 
 	m_bHQRS = GetBool(_T("HighQualityResampling"), true);
-	m_bDefaultSelectionMode = GetBool(_T("DefaultSelectionMode"), true);
+	m_bDefaultSelectionMode = GetBool(_T("DefaultSelectionMode"), true);	// [GF] Note: This values is missing from SaveSettings().
 	m_bShowFileName = GetBool(_T("ShowFileName"), false);
 	m_bShowFileInfo = GetBool(_T("ShowFileInfo"), false);
 	m_bKeepParams = GetBool(_T("KeepParameters"), false);
 	m_eSlideShowTransitionEffect = Helpers::ConvertTransitionEffectFromString(GetString(_T("SlideShowTransitionEffect"), _T("")));
+
+// -------------------------------------------------------------------------------------------
+// [GF] Custom writable ini settings of this mod
+
+	m_nBookModePageHeight = GetInt(_T("BookModePageHeight"), 122, 100, 1000);
+
+// -------------------------------------------------------------------------------------------
 }
 
 void CSettingsProvider::SaveSettings(const CImageProcessingParams& procParams, 
@@ -453,6 +507,8 @@ void CSettingsProvider::SaveSettings(const CImageProcessingParams& procParams,
 									 Helpers::EAutoZoomMode eAutoZoomMode, Helpers::EAutoZoomMode eAutoZoomModeFullScreen,
 									 bool bShowNavPanel, bool bShowFileName, bool bShowFileInfo,
 									 Helpers::ETransitionEffect eSlideShowTransitionEffect) {
+/* Debugging */	::OutputDebugStringW(TEXT("CSettingsProvider::SaveSettings()"));
+
 	MakeSureUserINIExists();
 
 	WriteDouble(_T("Contrast"), procParams.Contrast);
@@ -841,7 +897,10 @@ Helpers::EAutoZoomMode CSettingsProvider::GetAutoZoomMode(LPCTSTR sKey, Helpers:
 }
 
 LPCTSTR CSettingsProvider::GetAutoZoomModeString(Helpers::EAutoZoomMode autoZoomMode) {
-	if (autoZoomMode == Helpers::ZM_FillScreen) {
+	if (autoZoomMode == Helpers::ZM_None) {
+		return _T("None");
+	}
+	else if (autoZoomMode == Helpers::ZM_FillScreen) {
 		return _T("Fill");
 	}
 	else if (autoZoomMode == Helpers::ZM_FitToScreen) {
@@ -849,6 +908,9 @@ LPCTSTR CSettingsProvider::GetAutoZoomModeString(Helpers::EAutoZoomMode autoZoom
 	}
 	else if (autoZoomMode == Helpers::ZM_FillScreenNoZoom) {
 		return _T("FillNoZoom");
+	}
+	else if (autoZoomMode == Helpers::ZM_BookMode) {
+		return _T("BookMode");
 	}
 	return _T("FitNoZoom");
 }

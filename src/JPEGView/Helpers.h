@@ -35,12 +35,21 @@ namespace Helpers {
 		NM_LoopSameDirectoryLevel
 	};
 
+	// Single instance modes
+	enum ESingleInstanceMode {
+		SI_Never,
+		SI_PerFolder,
+		SI_Always
+	};
+	
 	// Auto zoom modes
 	enum EAutoZoomMode {
+		ZM_None,
 		ZM_FitToScreenNoZoom,
 		ZM_FillScreenNoZoom,
 		ZM_FitToScreen,
-		ZM_FillScreen
+		ZM_FillScreen,
+		ZM_BookMode
 	};
 
 	// Transition effects for full screen slideshow
@@ -101,6 +110,7 @@ namespace Helpers {
 	CString SystemTimeToString(const SYSTEMTIME &time);
 
 	// pixel is ARGB, backgroundColor is BGR. Returns ARGB
+
 	static inline uint32 AlphaBlendBackground(uint32 pixel, COLORREF backgroundColor)
 	{
 		uint32 alpha = pixel & 0xFF000000;
@@ -114,6 +124,7 @@ namespace Helpers {
 		if (alpha == 0) {
 			return (bg_r << 16) + (bg_g << 8) + (bg_b);
 		} else {
+/*
 			uint8 r = (pixel >> 16) & 0xFF;
 			uint8 g = (pixel >>  8) & 0xFF;
 			uint8 b = (pixel      ) & 0xFF;
@@ -125,6 +136,22 @@ namespace Helpers {
 				(  (uint8)(((r * a + bg_r * one_minus_a) / 255.0) + 0.5) << 16) +
 				(  (uint8)(((g * a + bg_g * one_minus_a) / 255.0) + 0.5) <<  8) + 
 				(  (uint8)(((b * a + bg_b * one_minus_a) / 255.0) + 0.5)      );
+*/
+			// From https://github.com/aviscaerulea/jpegview-nt.git
+			// Integer division by 255: (v + 128 + ((v + 128) >> 8)) >> 8
+			// This code performs about 30% faster than the original one above and gives bit-identical results.
+
+			uint32 a = alpha >> 24;
+			uint32 one_minus_a = 255 - a;
+			uint32 vr = ((pixel >> 16) & 0xFF) * a + bg_r * one_minus_a;
+			uint32 vg = ((pixel >>  8) & 0xFF) * a + bg_g * one_minus_a;
+			uint32 vb = ((pixel      ) & 0xFF) * a + bg_b * one_minus_a;
+
+			return
+				0xFF000000 |
+				(((vr + 128 + ((vr + 128) >> 8)) >> 8) << 16) |
+				(((vg + 128 + ((vg + 128) >> 8)) >> 8) <<  8) |
+				(((vb + 128 + ((vb + 128) >> 8)) >> 8)      );
 		}
 }
 
@@ -134,7 +161,7 @@ namespace Helpers {
 	// Outputs also the zoom factor to resize to this new size.
 	// nWidth, nHeight are the original image width and height
 	CSize GetImageRect(int nWidth, int nHeight, int nScreenWidth, int nScreenHeight, 
-		bool bAllowZoomIn, bool bFillCrop, bool bLimitAR, double & dZoom);
+		bool bAllowZoomIn, bool bFillCrop, bool bLimitAR, EAutoZoomMode eAutoZoomMode, double & dZoom);
 
 	// Gets the image size to be used when fitting the image to screen according to the auto zoom mode given
 	CSize GetImageRect(int nWidth, int nHeight, int nScreenWidth, int nScreenHeight, EAutoZoomMode eAutoZoomMode, double & dZoom);
@@ -162,7 +189,7 @@ namespace Helpers {
 	void GetZoomParameters(float & fZoom, CPoint & offsets, CSize imageSize, CSize windowSize, CRect zoomRect);
 
 	// Gets a window rectangle (in screen coordinates) that fits the given image
-	CRect GetWindowRectMatchingImageSize(HWND hWnd, CSize minSize, CSize maxSize, double& dZoom, CJPEGImage* pImage, bool bForceCenterWindow, bool bKeepAspectRatio, bool bWindowBorderless);
+	CRect GetWindowRectMatchingImageSize(HWND hWnd, CSize minSize, CSize maxSize, double& dZoom, CJPEGImage* pImage, bool bForceCenterWindow, bool bKeepAspectRatio, bool bWindowBorderless, EAutoZoomMode eAutoZoomMode);
 
 	// Gets if the given image can be displayed without sampling down the image.
 	bool CanDisplayImageWithoutResize(HWND hWnd, CJPEGImage* pImage);
@@ -248,6 +275,9 @@ namespace Helpers {
 	// Gets the image format given a file name (uses the file extension)
 	EImageFormat GetImageFormat(LPCTSTR sFileName);
 
+	// Checks if the image format is RAW given a file extension
+	bool IsRawImageFormat(LPCTSTR sExt);
+
 	// Returns the short form of the path (including the short form of the file name)
 	CString GetShortFilePath(LPCTSTR sPath);
 
@@ -307,4 +337,7 @@ namespace Helpers {
 	private:
 		CRITICAL_SECTION & m_cs;
 	};
+
+	int NumConcurrentThreads(void);		// [GF] Used in "SettingsProvider.cpp" to set "m_nNumCores"
+	CString FormatFileSize(__int64 filesize);
 }

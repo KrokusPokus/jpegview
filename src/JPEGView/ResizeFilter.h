@@ -1,7 +1,7 @@
 #pragma once
 
 // Maximal length of filter kernels. The kernels may be shorter but never longer.
-#define MAX_FILTER_LEN 16
+#define MAX_FILTER_LEN 64
 
 enum FilterSIMDType {
 	FilterSIMDType_None, // filter is not for SIMD processing
@@ -24,9 +24,10 @@ struct FilterKernelBlock {
 };
 
 // Filter kernel and filter kernel block for SSE (SIMD).
-// For SSE, we need 8 repetitions of each kernel element (128 bit in total, SSE register size)
+// For int16 in SSE, we need 8 repetitions of each kernel element (128 bit in total, SSE register size)
+// For f32 in SSE, we need 4 repetitions of each kernel element (4 x 32 = 128 bit in total, SSE register size)
 struct XMMKernelElement {
-	int16 valueRepeated[8];
+	float valueRepeated[4];
 };
 
 struct XMMFilterKernel {
@@ -45,8 +46,9 @@ struct XMMFilterKernelBlock {
 
 // Filter kernel and filter kernel block for AVX (SIMD).
 // For AVX, we need 16 repetitions of each kernel element (256 bit in total, AVX register size)
+// For f32 in AVX2, we need 8 repetitions of each kernel element (8 x 32 = 256 bit in total, AVX2 register size)
 struct AVXKernelElement {
-	int16 valueRepeated[16];
+	float valueRepeated[8];
 };
 
 struct AVXFilterKernel {

@@ -24,6 +24,7 @@
 *.exp
 *.exe
 
+*.filters
 *.user
 
 # Visual C++ cache files
@@ -33,6 +34,7 @@ ipch/
 *.opendb
 *.opensdf
 *.sdf
+*.suo
 *.cachefile
 *.VC.db
 *.VC.VC.opendb

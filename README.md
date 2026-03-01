@@ -1,3 +1,30 @@
+# JPEGView_L
+
+## Core differences to the original version 
+
+* Up- and downsamples images in linear space. This is crucial for lineart, where lines and edges otherwise come out too dark and screentones can show moiree patterns not in the source material. While professional image editing tools like Photoshop and GIMP have been using linear light scaling for years, there currently seems to exist no plain image viewer giving correct output.
+More information: http://www.ericbrasseur.org/gamma.html
+* The available downsampling filters have been modified to offer the well known 'Hermite', 'Mitchell', 'Catrom' and 'Lanczos2' and give reference output identical to ImageMagick.
+More information on how resampling filters work: http://legacy.imagemagick.org/Usage/filter/
+* Dedicated functionality for manga/comic reading in display and controls as well as bookmark support for CBZ/CB7 files. Continue where you left.
+* Extended single instance mode: Now supports "PerFolder" additionaly to "Always" and "Never".
+* Smooth scrolling for pan keys.
+* Smart panning keys that combine scrolling and jumping to next/previous image based on zoom.
+
+## System Requirements
+
+* 64-bit Windows OS
+* CPU with SSE2. This is the only instruction set fully working with linear light math at this time. 
+
+
+## Additional Thanks
+
+* To aviscaerulea for the optimized alpha blending code
+* To sdneon for the CBZ/CB7 implementation
+
+<br><br>
+
+---
 [![Documentation](https://img.shields.io/badge/Docs-Outdated-yellowgreen)](https://htmlpreview.github.io/?https://github.com/sylikc/jpegview/blob/master/src/JPEGView/Config/readme.html) [![Localization Progress](https://img.shields.io/badge/Localized-91%25-blueviolet)](#Localization) [![Build x64](https://github.com/sylikc/jpegview/actions/workflows/build-release-x64.yml/badge.svg?branch=master)](https://github.com/sylikc/jpegview/actions/workflows/build-release-x64.yml) [![OS Support](https://img.shields.io/badge/Windows-XP%20%7C%207%20%7C%208%20%7C%2010%20%7C%2011-blue)](#) [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue)](https://github.com/sylikc/jpegview/blob/master/LICENSE.txt)
 
 [![Latest GitHub Release](https://img.shields.io/github/v/release/sylikc/jpegview?label=GitHub&style=social)](https://github.com/sylikc/jpegview/releases)[![Downloads](https://badgen.net/github/assets-dl/sylikc/jpegview?cache=3600&color=grey&label=)](#) [![WinGet](https://repology.org/badge/version-for-repo/winget/jpegview.svg?allow_ignored=1&header=WinGet)](https://winstall.app/apps/sylikc.JPEGView) [![PortableApps](https://img.shields.io/badge/PortableApps-Current-green)](https://portableapps.com/apps/graphics_pictures/jpegview_portable) [![Scoop](https://repology.org/badge/version-for-repo/scoop/jpegview-fork.svg?header=Scoop)](https://scoop.sh/#/apps?q=%22jpegview-fork%22) [![Chocolatey](https://img.shields.io/chocolatey/v/jpegview)](https://community.chocolatey.org/packages/jpegview) [![Npackd](https://repology.org/badge/version-for-repo/npackd_stable/jpegview.svg?allow_ignored=1&header=Npackd)](https://www.npackd.org/p/jpegview)

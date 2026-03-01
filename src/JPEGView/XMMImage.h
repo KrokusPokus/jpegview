@@ -22,7 +22,7 @@ public:
 	~CXMMImage(void);
 
 	// Pointer to aligned memory of 16 bpp image
-	void * AlignedPtr() { return m_pMemory; }
+//	void * AlignedPtr() { return m_pMemory; }
 	void * AlignedPtr() const { return m_pMemory; }
 
 	// Geometry
@@ -35,7 +35,7 @@ public:
 	void* ConvertToDIBRGBA() const;
 
 private:
-	int GetLineSize() const { return m_nPaddedWidth*2; }
+	int GetLineSize() const { return m_nPaddedWidth*4; }	// [GF] i16 -> f32
 	int GetMemSize() const { return GetLineSize()*3*m_nPaddedHeight; }
 	void Init(int nWidth, int nHeight, bool bPadHeight, int padding);
 
