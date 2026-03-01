@@ -136,11 +136,6 @@ CSettingsProvider::CSettingsProvider(void) {
 	}
 	else {
 		m_eCPUAlgorithm = Helpers::ProbeCPU();
-
-		// [GF] Disable AVX2 on autodetect while it's still broken.
-		//		People who want to try it anyway can force it by setting "CPUType=AVX2"
-		if (m_eCPUAlgorithm == Helpers::CPU_AVX2)
-			m_eCPUAlgorithm = Helpers::CPU_SSE;
 	}
 	m_nNumCores = GetInt(_T("CPUCoresUsed"), 0, 0, 128);
 	if (m_nNumCores == 0) {

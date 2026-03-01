@@ -98,8 +98,7 @@ public:
 					Channels,
 					(uint8*)TargetPixels + ClippedTargetSize.cx * 4 * offsetY);
 		}
-		else {
-			if (SIMD == CBasicProcessing::AVX2)
+		else if (SIMD == CBasicProcessing::AVX2)
 			return NULL != SampleDown_HQ_AVX_Core(FullTargetSize,
 				CPoint(FullTargetOffset.x, FullTargetOffset.y + offsetY),
 				CSize(ClippedTargetSize.cx, sizeY),
@@ -115,7 +114,6 @@ public:
 				Channels, Sharpen,
 				Filter,
 				(uint8*)TargetPixels + ClippedTargetSize.cx * 4 * offsetY);
-		}
 	}
 
 	int Channels;
@@ -2373,7 +2371,7 @@ void* SampleDown_HQ_MMX_SSE_Core(CSize fullTargetSize, CPoint fullTargetOffset, 
 
 	// Resize Y
 	double t1 = Helpers::GetExactTickCount();
-	CXMMImage* pImage1 = new CXMMImage(sourceSize.cx, sourceSize.cy, nFirstX, nLastX, nFirstY, nLastY, pPixels, nChannels, 8);
+	CXMMImage* pImage1 = new CXMMImage(sourceSize.cx, sourceSize.cy, nFirstX, nLastX, nFirstY, nLastY, pPixels, nChannels, 4);
 	if (pImage1->AlignedPtr() == NULL) {
 		delete pImage1;
 		return NULL;
@@ -2435,7 +2433,7 @@ void* SampleDown_HQ_AVX_Core(CSize fullTargetSize, CPoint fullTargetOffset, CSiz
 
 	// Resize Y
 	double t1 = Helpers::GetExactTickCount();
-	CXMMImage* pImage1 = new CXMMImage(sourceSize.cx, sourceSize.cy, nFirstX, nLastX, nFirstY, nLastY, pPixels, nChannels, 16);
+	CXMMImage* pImage1 = new CXMMImage(sourceSize.cx, sourceSize.cy, nFirstX, nLastX, nFirstY, nLastY, pPixels, nChannels, 8);
 	if (pImage1->AlignedPtr() == NULL) {
 		delete pImage1;
 		return NULL;
@@ -2494,7 +2492,7 @@ void* SampleUp_HQ_MMX_SSE_Core(CSize fullTargetSize, CPoint fullTargetOffset, CS
 	const XMMFilterKernelBlock& kernelsX = filterX.Kernels();
 
 	// Resize Y
-	CXMMImage* pImage1 = new CXMMImage(nSourceWidth, nSourceHeight, nFirstX, nLastX, nFirstY, nLastY, pPixels, nChannels, 8);
+	CXMMImage* pImage1 = new CXMMImage(nSourceWidth, nSourceHeight, nFirstX, nLastX, nFirstY, nLastY, pPixels, nChannels, 4);
 	if (pImage1->AlignedPtr() == NULL) {
 		delete pImage1;
 		return NULL;
@@ -2543,7 +2541,7 @@ void* SampleUp_HQ_AVX_Core(CSize fullTargetSize, CPoint fullTargetOffset, CSize 
 	const AVXFilterKernelBlock& kernelsX = filterX.Kernels();
 
 	// Resize Y
-	CXMMImage* pImage1 = new CXMMImage(nSourceWidth, nSourceHeight, nFirstX, nLastX, nFirstY, nLastY, pPixels, nChannels, 16);
+	CXMMImage* pImage1 = new CXMMImage(nSourceWidth, nSourceHeight, nFirstX, nLastX, nFirstY, nLastY, pPixels, nChannels, 8);
 	if (pImage1->AlignedPtr() == NULL) {
 		delete pImage1;
 		return NULL;

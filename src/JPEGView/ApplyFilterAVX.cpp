@@ -65,7 +65,7 @@ CXMMImage* ApplyFilter_AVX(int nSourceHeight, int nTargetHeight, int nWidth,
 
 				// the pixel data GREEN channel
 				ymm3 = *pSource;
-				ymm3 = _mm256_mul_ps(ymm2, ymm7);
+				ymm3 = _mm256_mul_ps(ymm3, ymm7);
 				ymm5 = _mm256_add_ps(ymm5, ymm3);
 				pSource = (__m256*)((uint8*)pSource + nChannelLenBytes);
 

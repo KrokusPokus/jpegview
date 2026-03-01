@@ -63,7 +63,7 @@ DisplayMonitor=-1
 ; MMX         Ц процессоры с поддержкой хот€ бы MMX II (Pentium III и новее)
 ; SSE         Ц Pentium III и новее
 ; AVX2        Ц процессоры с архитектурой Haswell
-CPUType=SSE
+CPUType=AutoDetect
 
 ;  оличество используемых €дер процессора. ¬озможные значени€: от 1 до 4.
 ; 0 Ц определ€ть автоматически.

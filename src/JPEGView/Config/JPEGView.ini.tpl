@@ -57,7 +57,7 @@ DisplayMonitor=-1
 ;    "AVX2"		This method is broken at this point in time and returns pink colored images.
 ;          		Resamples in linear space, for both up- and downsampling.
 ;				Only slightly faster than SSE. Bottleneck might be memory bandwidth or latency.
-CPUType=SSE
+CPUType=AutoDetect
 
 ; Number of CPU cores used. Must be 1 to 128, or 0 for auto detect.
 ; There are diminishing returns in processing speed when going beyond 4. Memory bandwidth might be the limiting factor.
