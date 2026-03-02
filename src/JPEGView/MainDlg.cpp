@@ -382,8 +382,8 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 		SWP_NOZORDER | SWP_NOCOPYBITS | SWP_NOACTIVATE | SWP_NOREDRAW);
 
 
-/* Debugging */	TCHAR debugtext[1024];
-/* Debugging */	swprintf(debugtext,1024,TEXT("OnInitDialog() m_sStartupFile='%s'"), m_sStartupFile);
+//* Debugging */	TCHAR debugtext[1024];
+//* Debugging */	swprintf(debugtext,1024,TEXT("OnInitDialog() m_sStartupFile='%s'"), m_sStartupFile);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 	int nFrameIndex = 0;	// Will stay zero if no bookmarks are found.
@@ -423,7 +423,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 
 // Note: With AutoFullScreen, at this point m_clientRect will be monitorRect even when m_bFullScreenMode==0
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("OnInitDialog() m_bKeepParams=%d m_bFullScreenMode = %d  AutoFullScreen = %d m_clientRect.Width=%d m_clientRect.Height=%d"), m_bKeepParams, m_bFullScreenMode, sp.AutoFullScreen(), m_clientRect.Width(), m_clientRect.Height());
+//* Debugging */	swprintf(debugtext,1024,TEXT("OnInitDialog() m_bKeepParams=%d m_bFullScreenMode = %d  AutoFullScreen = %d m_clientRect.Width=%d m_clientRect.Height=%d"), m_bKeepParams, m_bFullScreenMode, sp.AutoFullScreen(), m_clientRect.Width(), m_clientRect.Height());
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 	// Create image processing panel at bottom of screen
@@ -473,7 +473,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	m_bMouseOn = !m_bFullScreenMode;
 	::ShowCursor(m_bMouseOn);
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("OnInitDialog()   Before new CFileList()  m_sStartupFile='%s'"), m_sStartupFile);
+//* Debugging */	swprintf(debugtext,1024,TEXT("OnInitDialog()   Before new CFileList()  m_sStartupFile='%s'"), m_sStartupFile);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 	// intitialize list of files to show with startup file (and folder)
@@ -485,13 +485,13 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	// create thread pool for processing requests on multiple CPU cores
 	CProcessingThreadPool::This().CreateThreadPoolThreads();
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("OnInitDialog()   Before new CJPEGProvider() m_hWnd=%d"), m_hWnd);
+//* Debugging */	swprintf(debugtext,1024,TEXT("OnInitDialog()   Before new CJPEGProvider() m_hWnd=%d"), m_hWnd);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 	// create JPEG provider and request first image - do no processing yet if not in fullscreen mode (as we do not know the size yet)
 	m_pJPEGProvider = new CJPEGProvider(m_hWnd, NUM_THREADS, READ_AHEAD_BUFFERS);
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("OnInitDialog()   Before RequestImage() nFrameIndex=%d"), nFrameIndex);
+//* Debugging */	swprintf(debugtext,1024,TEXT("OnInitDialog()   Before RequestImage() nFrameIndex=%d"), nFrameIndex);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 	m_pCurrentImage = m_pJPEGProvider->RequestImage(m_pFileList, CJPEGProvider::FORWARD,
@@ -545,8 +545,8 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 
 LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-/* Debugging */	TCHAR debugtext[1024];
-/* Debugging */	swprintf(debugtext,1024,TEXT("OnPaint() Pos 1   m_bTemporaryLowQ=%d   m_offsets.x=%d  m_offsets.y=%d"), m_bTemporaryLowQ, m_offsets.x, m_offsets.y);
+//* Debugging */	TCHAR debugtext[1024];
+//* Debugging */	swprintf(debugtext,1024,TEXT("OnPaint() Pos 1   m_bTemporaryLowQ=%d   m_offsets.x=%d  m_offsets.y=%d"), m_bTemporaryLowQ, m_offsets.x, m_offsets.y);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 	static bool s_bFirst = true;
@@ -612,24 +612,25 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 		m_virtualImageSize = newSize;
 		m_dRealizedZoom = (double)newSize.cx / m_pCurrentImage->OrigSize().cx;
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("OnPaint() Pos 2   newSize.cx=%d  newSize.cy%d  m_dRealizedZoom=%f  m_offsets.x=%d  m_offsets.y=%d"), newSize.cx, newSize.cy, m_dRealizedZoom, m_offsets.x, m_offsets.y);
+//* Debugging */	swprintf(debugtext,1024,TEXT("OnPaint() Pos 2   newSize.cx=%d  newSize.cy%d  m_dRealizedZoom=%f  m_offsets.x=%d  m_offsets.y=%d"), newSize.cx, newSize.cy, m_dRealizedZoom, m_offsets.x, m_offsets.y);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 		CPoint unlimitedOffsets = m_offsets;
 		m_offsets = Helpers::LimitOffsets(m_offsets, m_clientRect.Size(), newSize);
 		m_DIBOffsets = m_bZoomMode ? (unlimitedOffsets - m_offsets) : CPoint(0, 0);
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("OnPaint() Pos 3   unlimitedOffsets.x=%d  unlimitedOffsets.y=%d   m_offsets.x=%d  m_offsets.y=%d   m_DIBOffsets.x=%d  m_DIBOffsets.y=%d"), unlimitedOffsets.x, unlimitedOffsets.y, m_offsets.x, m_offsets.y, m_DIBOffsets.x, m_DIBOffsets.y);
+//* Debugging */	swprintf(debugtext,1024,TEXT("OnPaint() Pos 3   unlimitedOffsets.x=%d  unlimitedOffsets.y=%d   m_offsets.x=%d  m_offsets.y=%d   m_DIBOffsets.x=%d  m_DIBOffsets.y=%d"), unlimitedOffsets.x, unlimitedOffsets.y, m_offsets.x, m_offsets.y, m_DIBOffsets.x, m_DIBOffsets.y);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 		// Clip to client rectangle and request the DIB
 		CSize clippedSize(min(m_clientRect.Width(), newSize.cx), min(m_clientRect.Height(), newSize.cy));
 		CPoint offsetsInImage = m_pCurrentImage->ConvertOffset(newSize, clippedSize, m_offsets);
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("OnPaint() Pos 4   offsetsInImage.x=%d  offsetsInImage.y=%d"), offsetsInImage.x, offsetsInImage.y);
+//* Debugging */	swprintf(debugtext,1024,TEXT("OnPaint() Pos 4   offsetsInImage.x=%d  offsetsInImage.y=%d"), offsetsInImage.x, offsetsInImage.y);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
-/* Debugging */	double t1 = Helpers::GetExactTickCount();
+		double t1 = Helpers::GetExactTickCount();
+
 		void* pDIBData;
 		if (m_pUnsharpMaskPanelCtl->IsVisible()) {
 			pDIBData = m_pUnsharpMaskPanelCtl->GetUSMDIBForPreview(clippedSize, offsetsInImage, 
@@ -664,8 +665,10 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 			memDCMgr.BlitImageToMemDC(pDIBData, &bmInfo, ptDIBStart, m_pNavPanelCtl->CurrentBlendingFactor());
 		}
 		if (m_bZoomMode) m_offsets = unlimitedOffsets;
-/* Debugging */	double t2 = Helpers::GetExactTickCount();
-    	if (m_bShowInfo) {
+
+		double t2 = Helpers::GetExactTickCount();
+
+		if (m_bShowInfo) {
     		CSettingsProvider& sp = CSettingsProvider::This();
     		int iNumThreads = sp.NumberOfCoresToUse();
     		Helpers::CPUType cpu = sp.AlgorithmImplementation();
@@ -1867,7 +1870,7 @@ bool CMainDlg::CloseHelpDlg() {
 }
 
 void CMainDlg::ExecuteCommand(int nCommand) {
-/* Debugging */	TCHAR debugtext[1024];
+//* Debugging */	TCHAR debugtext[1024];
 	CSettingsProvider& sp = CSettingsProvider::This();
 	InvalidateHelpDlg();
 	switch (nCommand) {
@@ -1990,12 +1993,12 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			this->Invalidate(FALSE);
 			break;
 		case IDM_SHOW_NAVPANEL:
-/* Debugging */	swprintf(debugtext,1024,TEXT("m_pNavPanelCtl->IsActive() == %d"), m_pNavPanelCtl->IsActive());
+//* Debugging */	swprintf(debugtext,1024,TEXT("m_pNavPanelCtl->IsActive() == %d"), m_pNavPanelCtl->IsActive());
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 			m_pNavPanelCtl->SetActive(!m_pNavPanelCtl->IsActive());
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("m_pNavPanelCtl->IsActive() == %d"), m_pNavPanelCtl->IsActive());
+//* Debugging */	swprintf(debugtext,1024,TEXT("m_pNavPanelCtl->IsActive() == %d"), m_pNavPanelCtl->IsActive());
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 			break;
@@ -3340,8 +3343,8 @@ void CMainDlg::GotoImage(EImagePosition ePos) {
 }
 
 void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
-/* Debugging */	TCHAR debugtext[1024];
-/* Debugging */	swprintf(debugtext,1024,TEXT("GotoImage(ePos=%d, nFlags=%d) Pos1"), ePos, nFlags);
+//* Debugging */	TCHAR debugtext[1024];
+//* Debugging */	swprintf(debugtext,1024,TEXT("GotoImage(ePos=%d, nFlags=%d) Pos1"), ePos, nFlags);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 	// Timer handling for slideshows
@@ -3350,12 +3353,12 @@ void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
 			StartSlideShowTimer(m_nCurrentTimeout);
 		}
 		StopAnimation();
-/* Debugging */	swprintf(debugtext,1024,TEXT("GotoImage(ePos=%d, nFlags=%d) Pos1a: (ePos == POS_Next || ePos == POS_NextSlideShow)"), ePos, nFlags);
+//* Debugging */	swprintf(debugtext,1024,TEXT("GotoImage(ePos=%d, nFlags=%d) Pos1a: (ePos == POS_Next || ePos == POS_NextSlideShow)"), ePos, nFlags);
 //* Debugging */	::OutputDebugStringW(debugtext);
 	} else if (ePos != POS_NextAnimation) {
 		StopMovieMode();
 		StopAnimation();
-/* Debugging */	swprintf(debugtext,1024,TEXT("GotoImage(ePos=%d, nFlags=%d) Pos1b: (ePos != POS_NextAnimation)"), ePos, nFlags);
+//* Debugging */	swprintf(debugtext,1024,TEXT("GotoImage(ePos=%d, nFlags=%d) Pos1b: (ePos != POS_NextAnimation)"), ePos, nFlags);
 //* Debugging */	::OutputDebugStringW(debugtext);
 	}
 
@@ -3428,7 +3431,7 @@ void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
 			break;
 	}
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("GotoImage(ePos=%d, nFlags=%d) Pos4  m_offsets.x=%d  m_offsets.y=%d  nOldFrameIndex=%d  nFrameIndex=%d"), ePos, nFlags, m_offsets.x, m_offsets.y, nOldFrameIndex, nFrameIndex);
+//* Debugging */	swprintf(debugtext,1024,TEXT("GotoImage(ePos=%d, nFlags=%d) Pos4  m_offsets.x=%d  m_offsets.y=%d  nOldFrameIndex=%d  nFrameIndex=%d"), ePos, nFlags, m_offsets.x, m_offsets.y, nOldFrameIndex, nFrameIndex);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 	if (bCheckIfSameImage && (m_pFileList == pOldFileList && (nOldFrameIndex == nFrameIndex || bNoWrapAroundEdgeFrame) && !m_pFileList->ChangedSinceCheckpoint())) {
@@ -3485,7 +3488,7 @@ void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
 			m_nLastLoadError = HelpersGUI::FileLoad_PasteFromClipboardFailed;
 		}
 	} else {
-/* Debugging */	swprintf(debugtext,1024,TEXT("GotoImage(ePos=%d, nFlags=%d) Pos5  m_offsets.x=%d  m_offsets.y=%d  nOldFrameIndex=%d  nFrameIndex=%d"), ePos, nFlags, m_offsets.x, m_offsets.y, nOldFrameIndex, nFrameIndex);
+//* Debugging */	swprintf(debugtext,1024,TEXT("GotoImage(ePos=%d, nFlags=%d) Pos5  m_offsets.x=%d  m_offsets.y=%d  nOldFrameIndex=%d  nFrameIndex=%d"), ePos, nFlags, m_offsets.x, m_offsets.y, nOldFrameIndex, nFrameIndex);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 		m_pCurrentImage = m_pJPEGProvider->RequestImage(m_pFileList, (ePos == POS_AwayFromCurrent) ? CJPEGProvider::NONE : eDirection,  
@@ -3494,14 +3497,14 @@ void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
 		m_nLastLoadError = (m_pCurrentImage == NULL) ? ((m_pFileList->Current() == NULL) ? HelpersGUI::FileLoad_NoFilesInDirectory : HelpersGUI::FileLoad_LoadError) : HelpersGUI::FileLoad_Ok;
 	}
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("GotoImage(ePos=%d, nFlags=%d) Pos6  m_offsets.x=%d  m_offsets.y=%d  nOldFrameIndex=%d  nFrameIndex=%d"), ePos, nFlags, m_offsets.x, m_offsets.y, nOldFrameIndex, nFrameIndex);
+//* Debugging */	swprintf(debugtext,1024,TEXT("GotoImage(ePos=%d, nFlags=%d) Pos6  m_offsets.x=%d  m_offsets.y=%d  nOldFrameIndex=%d  nFrameIndex=%d"), ePos, nFlags, m_offsets.x, m_offsets.y, nOldFrameIndex, nFrameIndex);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 	double minimalDisplayTime = CSettingsProvider::This().MinimalDisplayTime();
 	bool bSynchronize = (nFlags & KEEP_PARAMETERS) == 0;
 	AfterNewImageLoaded(bSynchronize, false, minimalDisplayTime > 0, ePos == POS_Previous);
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("GotoImage(ePos=%d, nFlags=%d) Pos7  m_offsets.x=%d  m_offsets.y=%d  nOldFrameIndex=%d  nFrameIndex=%d"), ePos, nFlags, m_offsets.x, m_offsets.y, nOldFrameIndex, nFrameIndex);
+//* Debugging */	swprintf(debugtext,1024,TEXT("GotoImage(ePos=%d, nFlags=%d) Pos7  m_offsets.x=%d  m_offsets.y=%d  nOldFrameIndex=%d  nFrameIndex=%d"), ePos, nFlags, m_offsets.x, m_offsets.y, nOldFrameIndex, nFrameIndex);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 	// if it is an animation (currently only animated GIF) start movie automatically
@@ -3526,7 +3529,7 @@ void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
 		AdjustWindowToImage(false);
 	}
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("GotoImage(ePos=%d, nFlags=%d) Pos7  m_offsets.x=%d  m_offsets.y=%d"), ePos, nFlags, m_offsets.x, m_offsets.y);
+//* Debugging */	swprintf(debugtext,1024,TEXT("GotoImage(ePos=%d, nFlags=%d) Pos7  m_offsets.x=%d  m_offsets.y=%d"), ePos, nFlags, m_offsets.x, m_offsets.y);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 	if (((nFlags & NO_UPDATE_WINDOW) == 0) && !(ePos == POS_NextSlideShow && UseSlideShowTransitionEffect())) {
@@ -3577,11 +3580,12 @@ void CMainDlg::AdjustSharpen(double dInc) {
 // returns true on success, false if nothing was done
 bool CMainDlg::PerformZoom(double dValue, bool bExponent, bool bZoomToMouse, bool bAdjustWindowToImage) {
 	double dOldZoom = m_dZoom;
+	double dRelative = 0.0;
 	m_bUserZoom = true;
 	m_isUserFitToScreen = false;
 
-/* Debugging */	TCHAR debugtext[1024];
-/* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom(double dValue=%f, bool bExponent=%d, bool bZoomToMouse=%d, bool bAdjustWindowToImage=%d) pos1   m_dZoomMult: %f, dOldZoom: %f  m_dZoom: %f"), dValue, bExponent, bZoomToMouse, bAdjustWindowToImage, m_dZoomMult, dOldZoom, m_dZoom);
+//* Debugging */	TCHAR debugtext[1024];
+//* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom(double dValue=%f, bool bExponent=%d, bool bZoomToMouse=%d, bool bAdjustWindowToImage=%d) pos1   m_dZoomMult: %f, dOldZoom: %f  m_dZoom: %f"), dValue, bExponent, bZoomToMouse, bAdjustWindowToImage, m_dZoomMult, dOldZoom, m_dZoom);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 	if (bExponent) {
@@ -3593,27 +3597,34 @@ bool CMainDlg::PerformZoom(double dValue, bool bExponent, bool bZoomToMouse, boo
 	if (m_pCurrentImage == NULL) {
 		m_dZoom = max(Helpers::ZoomMin, min(Helpers::ZoomMax, m_dZoom));
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom(double dValue=%f, bool bExponent=%d, bool bZoomToMouse=%d, bool bAdjustWindowToImage=%d) pos2a   m_dZoomMult: %f, dOldZoom: %f  m_dZoom: %f"), dValue, bExponent, bZoomToMouse, bAdjustWindowToImage, m_dZoomMult, dOldZoom, m_dZoom);
+//* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom(double dValue=%f, bool bExponent=%d, bool bZoomToMouse=%d, bool bAdjustWindowToImage=%d) pos2a   m_dZoomMult: %f, dOldZoom: %f  m_dZoom: %f"), dValue, bExponent, bZoomToMouse, bAdjustWindowToImage, m_dZoomMult, dOldZoom, m_dZoom);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 		return true;
 	}
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom(double dValue=%f, bool bExponent=%d, bool bZoomToMouse=%d, bool bAdjustWindowToImage=%d) pos2b   m_dZoomMult: %f, dOldZoom: %f  m_dZoom: %f"), dValue, bExponent, bZoomToMouse, bAdjustWindowToImage, m_dZoomMult, dOldZoom, m_dZoom);
+//* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom(double dValue=%f, bool bExponent=%d, bool bZoomToMouse=%d, bool bAdjustWindowToImage=%d) pos2b   m_dZoomMult: %f, dOldZoom: %f  m_dZoom: %f"), dValue, bExponent, bZoomToMouse, bAdjustWindowToImage, m_dZoomMult, dOldZoom, m_dZoom);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 	double dZoomMin = max(0.0001, min(Helpers::ZoomMin, GetZoomFactorForFitToScreen(false, false) * 0.5));
 	m_dZoom = max(dZoomMin, min(Helpers::ZoomMax, m_dZoom));
 
-	if (abs(m_dZoom - 1.0) < 0.05) { // Special case 1: Image zoomed size close to image real size -> Use real size
+	dRelative = m_dZoom;
+	if (dRelative < 1.0)
+		dRelative = 1 / dRelative;
+
+	if (dRelative < 1.05) { // Special case 1: Image zoomed size within 5% of image real size -> Use real size
 //* Debugging */	::OutputDebugStringW(TEXT("PerformZoom() pos3a   Image zoomed size close to image real size -> Use real size -> Setting m_dZoom=1.0"));
 		m_dZoom = 1.0;
 	} else { // Special case 2: Image zoomed size close to ZoomToWindow size -> Use ZoomToWindow size
 		double dZoomWindow = GetZoomFactorForFitToScreen(false, false);
-/* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos3b   dOldZoom: %f  m_dZoom: %f  GetZoomFactorForFitToScreen: %f"), dOldZoom, m_dZoom, dZoomWindow);
+		dRelative = (m_dZoom / dZoomWindow);
+		if (dRelative < 1.0)
+			dRelative = 1/dRelative; 
+//* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos3b   dOldZoom: %f  m_dZoom: %f  GetZoomFactorForFitToScreen: %f"), dOldZoom, m_dZoom, dZoomWindow);
 //* Debugging */	::OutputDebugStringW(debugtext);
-		if (abs(m_dZoom - dZoomWindow) < 0.05) {
-/* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos3c   Image zoomed size close to ZoomToWindow size -> Use ZoomToWindow size -> Setting m_dZoom=dZoomWindow=%f)"), dZoomWindow);
+		if (dRelative < 1.05) {
+//* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos3c   Image zoomed size close to ZoomToWindow size -> Use ZoomToWindow size -> Setting m_dZoom=dZoomWindow=%f)"), dZoomWindow);
 //* Debugging */	::OutputDebugStringW(debugtext);
 			m_dZoom = dZoomWindow;
 		}
@@ -3622,16 +3633,18 @@ bool CMainDlg::PerformZoom(double dValue, bool bExponent, bool bZoomToMouse, boo
 	// only pause on some percent if enabled
 	double pauseAtZoom = CSettingsProvider::This().ZoomPauseFactor();
 	if (pauseAtZoom != 0) {
-
-/* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos4a   (pauseAtZoom != 0) pauseAtZoom=%f"), pauseAtZoom);
+//* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos4a   (pauseAtZoom != 0) pauseAtZoom=%f"), pauseAtZoom);
 //* Debugging */	::OutputDebugStringW(debugtext);
+		dRelative = (m_dZoom / pauseAtZoom);
+		if (dRelative < 1.0)
+			dRelative = 1/dRelative; 
 
 		// snap to zoom factor... aka if within 1% of the set zoom factor, snap exactly to it
 		// skip it if the zoom factor is 100% since it's already checked above - save one expensive calculation of abs()
-		if (pauseAtZoom != 1 && abs(m_dZoom - pauseAtZoom) < 0.01) {
+		if (pauseAtZoom != 1 && (dRelative < 1.01)) {
 			m_dZoom = pauseAtZoom;
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos4b  (pauseAtZoom != 1 && abs(m_dZoom=%f - pauseAtZoom=%f) < 0.01) "), m_dZoom, pauseAtZoom);
+//* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos4b  (pauseAtZoom != 1 && abs(m_dZoom=%f - pauseAtZoom=%f) < 0.01) "), m_dZoom, pauseAtZoom);
 //* Debugging */	::OutputDebugStringW(debugtext);
 		}
 
@@ -3639,7 +3652,7 @@ bool CMainDlg::PerformZoom(double dValue, bool bExponent, bool bZoomToMouse, boo
 			// make a stop at 100 % (or whatever % is configured)
 			m_dZoom = pauseAtZoom;
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos4c   ((dOldZoom=%f - pauseAtZoom=%f) * (m_dZoom=%f - pauseAtZoom=%f) <= 0 && m_bInZooming=%d && !m_bZoomMode=%d)"), dOldZoom, pauseAtZoom, m_dZoom, pauseAtZoom, m_bInZooming, m_bZoomMode);
+//* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos4c   ((dOldZoom=%f - pauseAtZoom=%f) * (m_dZoom=%f - pauseAtZoom=%f) <= 0 && m_bInZooming=%d && !m_bZoomMode=%d)"), dOldZoom, pauseAtZoom, m_dZoom, pauseAtZoom, m_bInZooming, m_bZoomMode);
 //* Debugging */	::OutputDebugStringW(debugtext);
 		}
 	}
@@ -3650,7 +3663,7 @@ bool CMainDlg::PerformZoom(double dValue, bool bExponent, bool bZoomToMouse, boo
 	int nNewXSize = (int)(m_pCurrentImage->OrigWidth() * m_dZoom + 0.5);
 	int nNewYSize = (int)(m_pCurrentImage->OrigHeight() * m_dZoom + 0.5);
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos5   nOldXSize=%d  nOldYSize=%d  nNewXSize=%d  nNewYSize=%d  m_dZoom=%f"), nOldXSize, nOldYSize, nNewXSize, nNewYSize, m_dZoom);
+//* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos5   nOldXSize=%d  nOldYSize=%d  nNewXSize=%d  nNewYSize=%d  m_dZoom=%f"), nOldXSize, nOldYSize, nNewXSize, nNewYSize, m_dZoom);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 	if (nNewXSize > 65535 || nNewYSize > 65535) {
@@ -3658,7 +3671,7 @@ bool CMainDlg::PerformZoom(double dValue, bool bExponent, bool bZoomToMouse, boo
 		m_dZoom = m_dZoom*dFac;
 		nNewXSize = (int)(m_pCurrentImage->OrigWidth() * m_dZoom + 0.5);
 		nNewYSize = (int)(m_pCurrentImage->OrigHeight() * m_dZoom + 0.5);
-/* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos6   nOldXSize=%d  nOldYSize=%d  nNewXSize=%d  nNewYSize=%d  m_dZoom=%f"), nOldXSize, nOldYSize, nNewXSize, nNewYSize, m_dZoom);
+//* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos6   nOldXSize=%d  nOldYSize=%d  nNewXSize=%d  nNewYSize=%d  m_dZoom=%f"), nOldXSize, nOldYSize, nNewXSize, nNewYSize, m_dZoom);
 //* Debugging */	::OutputDebugStringW(debugtext);
 	}
 
@@ -3671,7 +3684,7 @@ bool CMainDlg::PerformZoom(double dValue, bool bExponent, bool bZoomToMouse, boo
 	// only actually perform the zoom if the old and new dimensions differ
 	// the float arithmetic doesn't always come up with the same answer, but the new sizes can be directly compared
 	if (nNewXSize == nOldXSize && nNewYSize == nOldYSize) {
-/* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos7a   nOldXSize=%d  nOldYSize=%d  nNewXSize=%d  nNewYSize=%d  m_dZoom=%f)"), nOldXSize, nOldYSize, nNewXSize, nNewYSize, m_dZoom);
+//* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos7a   nOldXSize=%d  nOldYSize=%d  nNewXSize=%d  nNewYSize=%d  m_dZoom=%f)"), nOldXSize, nOldYSize, nNewXSize, nNewYSize, m_dZoom);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 		// because there's rounding errors, it is possible to get stuck zooming out from fractional zoom,
@@ -3685,17 +3698,17 @@ bool CMainDlg::PerformZoom(double dValue, bool bExponent, bool bZoomToMouse, boo
 			// NOTE: this gets triggered on pauseAtZoom
 			m_dZoom = dOldZoom;  // restore previous zoom value
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos7b   nOldXSize=%d  nOldYSize=%d  nNewXSize=%d  nNewYSize=%d  m_dZoom=%f  bExponent=%d  dValue=%f)"), nOldXSize, nOldYSize, nNewXSize, nNewYSize, m_dZoom, bExponent, dValue);
+//* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos7b   nOldXSize=%d  nOldYSize=%d  nNewXSize=%d  nNewYSize=%d  m_dZoom=%f  bExponent=%d  dValue=%f)"), nOldXSize, nOldYSize, nNewXSize, nNewYSize, m_dZoom, bExponent, dValue);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 		}
 		// zooming in does not require restoring the previous zoom value
 		// because the code which checks the 65535 will re-scale the zoom factor to ensure it never exceeds 65535
-
+//* Debugging */	::OutputDebugStringW(TEXT("PerformZoom() pos7c   END: Doing nothing"));
 		return false; // then do nothing
 	}
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos8   m_dZoom=%f"), m_dZoom);
+//* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos8   m_dZoom=%f"), m_dZoom);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 	if (bZoomToMouse) {
@@ -3708,29 +3721,29 @@ bool CMainDlg::PerformZoom(double dValue, bool bExponent, bool bZoomToMouse, boo
 		m_offsets.x = Helpers::RoundToInt(nNewXSize/2 - m_clientRect.Width()/2 + nCenterX - nOldX*dFac);
 		m_offsets.y = Helpers::RoundToInt(nNewYSize/2 - m_clientRect.Height()/2 + nCenterY - nOldY*dFac);
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos9a   bZoomToMouse=%d  m_offsets.x=%d  m_offsets.y=%d   (zoom to mouse)"), bZoomToMouse, m_offsets.x, m_offsets.y);
+//* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos9a   bZoomToMouse=%d  m_offsets.x=%d  m_offsets.y=%d   (zoom to mouse)"), bZoomToMouse, m_offsets.x, m_offsets.y);
 //* Debugging */	::OutputDebugStringW(debugtext);
 	} else {
 		// zoom to center
 		m_offsets.x = Helpers::RoundToInt(m_offsets.x*m_dZoom/dOldZoom);
 		m_offsets.y = Helpers::RoundToInt(m_offsets.y*m_dZoom/dOldZoom);
-/* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos9a   bZoomToMouse=%d  m_offsets.x=%d  m_offsets.y=%d   (zoom to center)"), bZoomToMouse, m_offsets.x, m_offsets.y);
+//* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos9a   bZoomToMouse=%d  m_offsets.x=%d  m_offsets.y=%d   (zoom to center)"), bZoomToMouse, m_offsets.x, m_offsets.y);
 //* Debugging */	::OutputDebugStringW(debugtext);
 	}
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos10   fabs(dOldZoom - m_dZoom)=%f  m_bZoomMode=%d"), fabs(dOldZoom - m_dZoom), m_bZoomMode);
+//* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos10   fabs(dOldZoom - m_dZoom)=%f  m_bZoomMode=%d"), fabs(dOldZoom - m_dZoom), m_bZoomMode);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 	m_bInZooming = true;
 	StartLowQTimer(ZOOM_TIMEOUT);
 	if (fabs(dOldZoom - m_dZoom) > 0.0001 || m_bZoomMode) {
-/* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos11a   fabs(dOldZoom - m_dZoom)=%f  m_bZoomMode=%d"), fabs(dOldZoom - m_dZoom), m_bZoomMode);
+//* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos11a   fabs(dOldZoom - m_dZoom)=%f  m_bZoomMode=%d"), fabs(dOldZoom - m_dZoom), m_bZoomMode);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 		this->Invalidate(FALSE);
 		InvalidateHelpDlg();
 		if (bAdjustWindowToImage) {
-/* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos11b   fabs(dOldZoom - m_dZoom)=%f  m_bZoomMode=%d  bAdjustWindowToImage=%d"), fabs(dOldZoom - m_dZoom), m_bZoomMode, bAdjustWindowToImage);
+//* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos11b   fabs(dOldZoom - m_dZoom)=%f  m_bZoomMode=%d  bAdjustWindowToImage=%d"), fabs(dOldZoom - m_dZoom), m_bZoomMode, bAdjustWindowToImage);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 			AdjustWindowToImage(false);
@@ -3746,13 +3759,13 @@ bool CMainDlg::PerformZoom(double dValue, bool bExponent, bool bZoomToMouse, boo
 
 			double dImageAR = (double)nImageW/nImageH;
 
-/* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos11c   nImageW=%d  nImageH=%d  nWinW=%d  nWinH=%d  dImageAR=%f"), nImageW, nImageH, nWinW, nWinH, dImageAR);
+//* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos11c   nImageW=%d  nImageH=%d  nWinW=%d  nWinH=%d  dImageAR=%f"), nImageW, nImageH, nWinW, nWinH, dImageAR);
 //* Debugging */	::OutputDebugStringW(debugtext);
 
 			if (dImageAR < 1.0) {		// single page
 				if (((nImageW * m_dZoom) <= nWinW) && ((nImageH * m_dZoom) >= nWinH)) {
 					m_nBookModePageHeight = (int)((nWinH / (nImageH * m_dZoom)) * 100);
-/* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos11c   new m_nBookModePageHeight=%d"), m_nBookModePageHeight);
+//* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos11c   new m_nBookModePageHeight=%d"), m_nBookModePageHeight);
 //* Debugging */	::OutputDebugStringW(debugtext);
 				}
 			}
