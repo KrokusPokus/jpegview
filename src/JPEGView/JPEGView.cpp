@@ -226,15 +226,11 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 	int nTransitionTime = ParseCommandLineForTransitionTime(lpstrCmdLine);
 	int nDisplayMonitor = ParseCommandLineForDisplayMonitor(lpstrCmdLine);
 
-	// Searches for other instances and asks them if the want handle our startup file instead
+	// Searches for other instances and asks them if *they* want handle our startup file in our place. If not, we do it.
 	HANDLE hMutex = ::CreateMutex(NULL, FALSE, _T("JPVMtX2869"));
 	if (::GetLastError() == ERROR_ALREADY_EXISTS) {
 		::EnumWindows((WNDENUMPROC)EnumWindowsProc, (LPARAM)(LPCTSTR)sStartupFile);
 	}
-
-//* Debugging */	TCHAR debugtext[1024];
-//* Debugging */	swprintf(debugtext,1024,TEXT("_tWinMain() 1:   sStartupFile='%s'   _HWNDOtherInstance=%d"), sStartupFile, _HWNDOtherInstance);
-//* Debugging */	::OutputDebugStringW(debugtext);
 
 	int nRet = 0;
 	//Run application

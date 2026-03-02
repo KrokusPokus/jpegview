@@ -179,7 +179,6 @@ CSettingsProvider::CSettingsProvider(void) {
 		m_eSingleInstanceMode = Helpers::SI_PerFolder;
 	}
 
-
 	m_bNavigateMouseWheel = GetBool(_T("NavigateWithMouseWheel"), false);
 	m_dMouseWheelZoomSpeed = GetDouble(_T("MouseWheelZoomSpeed"), 1.0, 0.1, 10);
 
@@ -240,21 +239,6 @@ CSettingsProvider::CSettingsProvider(void) {
 		else if (sAuto.CompareNoCase(_T("sticky")) == 0) {
 			m_bStickyWindowSize = true;
 			m_bExplicitWindowRect = !m_stickyWindowRect.IsRectEmpty();
-		}
-		else {
-			RECT workAreaRect;
-			INT iBorderPosR = 0;
-			
-			HDC hdc = ::GetDC(NULL);
-			int ScreenDPI = GetDeviceCaps(hdc, LOGPIXELSX);
-			::ReleaseDC(NULL, hdc);
-
-			::SystemParametersInfo(SPI_GETWORKAREA, 0, &workAreaRect, 0);
-
-			iBorderPosR = (int(floor(((workAreaRect.right - floor(((256.0*(workAreaRect.right-workAreaRect.left))/1920) + 0.5))/32.0)+0.5))) * 32;
-
-			// left, top, right, bottom
-			m_defaultWindowRect = CRect((workAreaRect.right-iBorderPosR),workAreaRect.top,iBorderPosR,workAreaRect.bottom);
 		}
 	}
 	else {
@@ -376,10 +360,12 @@ CSettingsProvider::CSettingsProvider(void) {
 
 // -------------------------------------------------------------------------------------------
 // [GF] Custom non-writable ini settings of this mod
+
 	m_bBookModeLaunchFullscreen = GetBool(_T("BookModeLaunchFullscreen"), true);
 	m_bSmoothPanning = GetBool(_T("SmoothPanning"), true);
 	m_bSmartPanningKeys = GetBool(_T("SmartPanningKeys"), true);
 	m_bTitleBarUseFileIcon = GetBool(_T("TitleBarUseFileIcon"), true);
+
 // -------------------------------------------------------------------------------------------
 
 	// read all user commands
@@ -418,6 +404,7 @@ CSettingsProvider::CSettingsProvider(void) {
 			nGapIndex++;
 		}
 	} while (nGapIndex <= 2);
+	
 }
 
 CImageProcessingParams CSettingsProvider::LandscapeModeParams(const CImageProcessingParams& templParams) {
@@ -507,8 +494,6 @@ void CSettingsProvider::SaveSettings(const CImageProcessingParams& procParams,
 									 Helpers::EAutoZoomMode eAutoZoomMode, Helpers::EAutoZoomMode eAutoZoomModeFullScreen,
 									 bool bShowNavPanel, bool bShowFileName, bool bShowFileInfo,
 									 Helpers::ETransitionEffect eSlideShowTransitionEffect) {
-/* Debugging */	::OutputDebugStringW(TEXT("CSettingsProvider::SaveSettings()"));
-
 	MakeSureUserINIExists();
 
 	WriteDouble(_T("Contrast"), procParams.Contrast);
@@ -897,10 +882,7 @@ Helpers::EAutoZoomMode CSettingsProvider::GetAutoZoomMode(LPCTSTR sKey, Helpers:
 }
 
 LPCTSTR CSettingsProvider::GetAutoZoomModeString(Helpers::EAutoZoomMode autoZoomMode) {
-	if (autoZoomMode == Helpers::ZM_None) {
-		return _T("None");
-	}
-	else if (autoZoomMode == Helpers::ZM_FillScreen) {
+	if (autoZoomMode == Helpers::ZM_FillScreen) {
 		return _T("Fill");
 	}
 	else if (autoZoomMode == Helpers::ZM_FitToScreen) {
@@ -908,6 +890,9 @@ LPCTSTR CSettingsProvider::GetAutoZoomModeString(Helpers::EAutoZoomMode autoZoom
 	}
 	else if (autoZoomMode == Helpers::ZM_FillScreenNoZoom) {
 		return _T("FillNoZoom");
+	}
+	else if (autoZoomMode == Helpers::ZM_None) {
+		return _T("None");
 	}
 	else if (autoZoomMode == Helpers::ZM_BookMode) {
 		return _T("BookMode");
