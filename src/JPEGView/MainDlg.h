@@ -418,4 +418,5 @@ private:
 	CString LoadBookmark(LPCTSTR sFilePath);
 	void SaveBookmark();
 	bool IsBookModeFile(LPCTSTR sFilePath);
+	float MaxRatio(float valA, float valB);
 };

@@ -3580,7 +3580,6 @@ void CMainDlg::AdjustSharpen(double dInc) {
 // returns true on success, false if nothing was done
 bool CMainDlg::PerformZoom(double dValue, bool bExponent, bool bZoomToMouse, bool bAdjustWindowToImage) {
 	double dOldZoom = m_dZoom;
-	double dRelative = 0.0;
 	m_bUserZoom = true;
 	m_isUserFitToScreen = false;
 
@@ -3609,24 +3608,17 @@ bool CMainDlg::PerformZoom(double dValue, bool bExponent, bool bZoomToMouse, boo
 	double dZoomMin = max(0.0001, min(Helpers::ZoomMin, GetZoomFactorForFitToScreen(false, false) * 0.5));
 	m_dZoom = max(dZoomMin, min(Helpers::ZoomMax, m_dZoom));
 
-	dRelative = m_dZoom;
-	if (dRelative < 1.0)
-		dRelative = 1 / dRelative;
-
-	if (dRelative < 1.05) { // Special case 1: Image zoomed size within 5% of image real size -> Use real size
+	if (MaxRatio(m_dZoom, 1.0) < 1.05) { // Special case 1: Image zoomed size within 5% of image real size -> Use real size
 //* Debugging */	::OutputDebugStringW(TEXT("PerformZoom() pos3a   Image zoomed size close to image real size -> Use real size -> Setting m_dZoom=1.0"));
 		m_dZoom = 1.0;
 	} else { // Special case 2: Image zoomed size close to ZoomToWindow size -> Use ZoomToWindow size
 		double dZoomWindow = GetZoomFactorForFitToScreen(false, false);
-		dRelative = (m_dZoom / dZoomWindow);
-		if (dRelative < 1.0)
-			dRelative = 1/dRelative; 
 //* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos3b   dOldZoom: %f  m_dZoom: %f  GetZoomFactorForFitToScreen: %f"), dOldZoom, m_dZoom, dZoomWindow);
 //* Debugging */	::OutputDebugStringW(debugtext);
-		if (dRelative < 1.05) {
+		if (MaxRatio(m_dZoom, dZoomWindow) < 1.05) {
+			m_dZoom = dZoomWindow;
 //* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos3c   Image zoomed size close to ZoomToWindow size -> Use ZoomToWindow size -> Setting m_dZoom=dZoomWindow=%f)"), dZoomWindow);
 //* Debugging */	::OutputDebugStringW(debugtext);
-			m_dZoom = dZoomWindow;
 		}
 	}
 
@@ -3635,15 +3627,10 @@ bool CMainDlg::PerformZoom(double dValue, bool bExponent, bool bZoomToMouse, boo
 	if (pauseAtZoom != 0) {
 //* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos4a   (pauseAtZoom != 0) pauseAtZoom=%f"), pauseAtZoom);
 //* Debugging */	::OutputDebugStringW(debugtext);
-		dRelative = (m_dZoom / pauseAtZoom);
-		if (dRelative < 1.0)
-			dRelative = 1/dRelative; 
-
 		// snap to zoom factor... aka if within 1% of the set zoom factor, snap exactly to it
 		// skip it if the zoom factor is 100% since it's already checked above - save one expensive calculation of abs()
-		if (pauseAtZoom != 1 && (dRelative < 1.01)) {
+		if (pauseAtZoom != 1 && (MaxRatio(m_dZoom, pauseAtZoom) < 1.01)) {
 			m_dZoom = pauseAtZoom;
-
 //* Debugging */	swprintf(debugtext,1024,TEXT("PerformZoom() pos4b  (pauseAtZoom != 1 && abs(m_dZoom=%f - pauseAtZoom=%f) < 0.01) "), m_dZoom, pauseAtZoom);
 //* Debugging */	::OutputDebugStringW(debugtext);
 		}
@@ -4833,4 +4820,11 @@ bool CMainDlg::IsBookModeFile(LPCTSTR sFilePath) {
 		return true;
 	}
 	return false;
+}
+
+float CMainDlg::MaxRatio(float valA, float valB) {
+	double dRatio = (valA / valB);
+	if (dRatio < 1.0)
+		dRatio = 1 / dRatio;
+	return dRatio;
 }
