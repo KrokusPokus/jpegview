@@ -111,7 +111,7 @@ static inline unsigned int TellFile(HANDLE file) {
 	return ret;
 }
 
-CJPEGImage* PsdReader::ReadImage(LPCTSTR strFileName, bool& bOutOfMemory)
+CJPEGImage* PsdReader::ReadImage(LPCTSTR strFileName, Helpers::ETransparencyMode nTransparencyMode, bool& bOutOfMemory)
 {
 	HANDLE hFile;
 	hFile = ::CreateFile(strFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
@@ -410,12 +410,15 @@ CJPEGImage* PsdReader::ReadImage(LPCTSTR strFileName, bool& bOutOfMemory)
 		ICCProfileTransform::DoTransform(transform, pPixelData, pPixelData, nWidth, nHeight, nRowSize);
 
 		if (nChannels == 4) {
-			// Multiply alpha value into each AABBGGRR pixel
-			uint32* pImage32 = (uint32*)pPixelData;
-			// Blend K channel for CMYK images, alpha channel for RGBA images
-			COLORREF backgroundColor = nColorMode == MODE_CMYK ? 0 : CSettingsProvider::This().ColorTransparency();
-			for (int i = 0; i < nWidth * nHeight; i++)
-				*pImage32++ = Helpers::AlphaBlendBackground(*pImage32, backgroundColor);
+			if (nColorMode == MODE_CMYK) {
+				// Blend K channel for CMYK images.
+				uint32* pImage32 = (uint32*)pPixelData;
+				for (int i = 0; i < nWidth * nHeight; i++)
+					*pImage32++ = Helpers::AlphaBlendBackground(*pImage32, 0);
+			} else {
+				// Blend alpha channel for RGBA images
+				Helpers::BlendAlpha((uint32*)pPixelData, nWidth, nHeight, nTransparencyMode);
+			}
 		}
 
 		Image = new CJPEGImage(nWidth, nHeight, pPixelData, pEXIFData, nChannels, 0, IF_PSD, false, 0, 1, 0);

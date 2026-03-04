@@ -1,7 +1,6 @@
 #include "StdAfx.h"
 #include "ReaderTGA.h"
 #include "JPEGImage.h"
-#include "Helpers.h"
 #include "BasicProcessing.h"
 #include "MaxImageDef.h"
 
@@ -33,7 +32,7 @@ static bool IsAlphaChannelValid(int width, int height, uint32* pImageData)
 }
 
 
-CJPEGImage* CReaderTGA::ReadTgaImage(LPCTSTR strFileName, COLORREF backgroundColor, bool& bOutOfMemory) {
+CJPEGImage* CReaderTGA::ReadTgaImage(LPCTSTR strFileName, Helpers::ETransparencyMode nTransparencyMode, bool& bOutOfMemory) {
 
 	bOutOfMemory = false;
 
@@ -348,10 +347,7 @@ CJPEGImage* CReaderTGA::ReadTgaImage(LPCTSTR strFileName, COLORREF backgroundCol
 		uint32* pImage32 = (uint32*)pImageData;
 		if (IsAlphaChannelValid(width, height, (uint32*)pImageData))
 		{
-			for (int i = 0; i < width*height; i++)
-			{
-				*pImage32++ = Helpers::AlphaBlendBackground(*pImage32, backgroundColor | ALPHA_OPAQUE);
-			}
+			Helpers::BlendAlpha((uint32*)pImageData, width, height, nTransparencyMode);
 		}
 		else
 		{

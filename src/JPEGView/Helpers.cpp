@@ -1056,4 +1056,20 @@ CString FormatFileSize(__int64 nFileSize) {
 	return sFileSize;
 }
 
+// Based on: https://github.com/sdneon/jpegview.git
+	void BlendAlpha(uint32* pImage32, int nWidth, int nHeight, Helpers::ETransparencyMode nTransparencyMode)
+	{
+		COLORREF nTransparency = CSettingsProvider::This().ColorTransparency();
+		if (nTransparencyMode != Helpers::TP_CHECKERBOARD) {
+			if (nTransparencyMode == Helpers::TP_BLEND_INVERSE) {
+				nTransparency = ~(nTransparency & 0xffffff);
+			}
+			for (int i = 0; i < nWidth * nHeight; ++i)
+				*pImage32++ = AlphaBlendBackground(*pImage32, nTransparency);
+		} else {
+			for (int y = 0; y < nHeight; ++y)
+				for (int x = 0; x < nWidth; ++x)
+					*pImage32++ = AlphaBlendBackground(*pImage32, nTransparency, true, x, y);
+		}
+	}
 }

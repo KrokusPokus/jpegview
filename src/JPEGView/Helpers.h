@@ -52,6 +52,13 @@ namespace Helpers {
 		ZM_BookMode
 	};
 
+	// Transparency modes
+	enum ETransparencyMode {
+		TP_BLEND = 0,
+		TP_CHECKERBOARD,
+		TP_BLEND_INVERSE
+	};
+
 	// Transition effects for full screen slideshow
 	enum ETransitionEffect {
 		TE_None,
@@ -109,14 +116,29 @@ namespace Helpers {
 	// Converts the system time to a string
 	CString SystemTimeToString(const SYSTEMTIME &time);
 
-	// pixel is ARGB, backgroundColor is BGR. Returns ARGB
+	// Based on: https://github.com/sdneon/jpegview.git
+	// COLORREF is 0x00bbggrr. 0xFF00000 signals we don't use an override color
+	void BlendAlpha(uint32* pImage32, int nWidth, int nHeight, Helpers::ETransparencyMode TransparencyMode);
 
-	static inline uint32 AlphaBlendBackground(uint32 pixel, COLORREF backgroundColor)
+	// pixel is ARGB, backgroundColor is BGR. Returns ARGB
+	// [GF] Note: PsdReader::ReadImage() still calls this directly for "blending the K channel in CMYK images".
+	//		Anything else is going through BlendAlpha().
+	static inline uint32 AlphaBlendBackground(uint32 pixel, COLORREF backgroundColor, bool bUseCheckerboard = false, int x = -1, int y = -1)
 	{
 		uint32 alpha = pixel & 0xFF000000;
 		if (alpha == 0xFF000000)
 			return pixel;
 
+		if (bUseCheckerboard) {
+			//ignore configured backgroundColor, and use white and light gray for checkerboard
+			if (((x & 0x10) && ((y & 0x10) == 0))
+				|| ((y & 0x10) && ((x & 0x10) == 0))) {
+				backgroundColor = 0x00ffffff;
+			} else {
+				backgroundColor = 0x00c0c0c0;
+			}
+		}
+		
 		uint8 bg_r = GetRValue(backgroundColor);
 		uint8 bg_g = GetGValue(backgroundColor);
 		uint8 bg_b = GetBValue(backgroundColor);

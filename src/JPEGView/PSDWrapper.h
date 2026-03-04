@@ -1,12 +1,12 @@
 #pragma once
-
+#include "Helpers.h"
 #include "JPEGImage.h"
 
 class PsdReader
 {
 public:
 	// Returns image from PSD file
-	static CJPEGImage* ReadImage(LPCTSTR strFileName, bool& bOutOfMemory);
+	static CJPEGImage* ReadImage(LPCTSTR strFileName, Helpers::ETransparencyMode nTransparencyMode, bool& bOutOfMemory);
 
 	// Returns embedded JPEG thumbnail from PSD file
 	static CJPEGImage* ReadThumb(LPCTSTR strFileName, bool& bOutOfMemory);

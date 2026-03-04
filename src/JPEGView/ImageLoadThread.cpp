@@ -122,7 +122,7 @@ static EImageFormat GetBitmapFormat(Gdiplus::Bitmap * pBitmap) {
 }
 
 static CJPEGImage* ConvertGDIPlusBitmapToJPEGImage(Gdiplus::Bitmap* pBitmap, int nFrameIndex, void* pEXIFData, 
-	__int64 nJPEGHash, bool &isOutOfMemory, bool &isAnimatedGIF) {
+	__int64 nJPEGHash, bool &isOutOfMemory, bool &isAnimatedGIF, Helpers::ETransparencyMode nTransparencyMode = Helpers::TP_BLEND) {
 
 	isOutOfMemory = false;
 	isAnimatedGIF = false;
@@ -528,7 +528,7 @@ void CImageLoadThread::ProcessReadJPEGRequest(CRequest * request) {
 					Gdiplus::Bitmap* pBitmap = Gdiplus::Bitmap::FromStream(pStream, CSettingsProvider::This().UseEmbeddedColorProfiles());
 					bool isOutOfMemory, isAnimatedGIF;
 					request->Image = ConvertGDIPlusBitmapToJPEGImage(pBitmap, 0, Helpers::FindEXIFBlock(pBuffer, nFileSize),
-						Helpers::CalculateJPEGFileHash(pBuffer, nFileSize), isOutOfMemory, isAnimatedGIF);
+						Helpers::CalculateJPEGFileHash(pBuffer, nFileSize), isOutOfMemory, isAnimatedGIF, request->ProcessParams.TransparencyMode);
 					request->OutOfMemory = request->Image == NULL && isOutOfMemory;
 					if (request->Image != NULL) {
 						request->Image->SetJPEGComment(Helpers::GetJPEGComment(pBuffer, nFileSize));
@@ -593,7 +593,7 @@ void CImageLoadThread::ProcessReadBMPRequest(CRequest * request) {
 
 void CImageLoadThread::ProcessReadTGARequest(CRequest * request) {
 	bool bOutOfMemory;
-	request->Image = CReaderTGA::ReadTgaImage(request->FileName, CSettingsProvider::This().ColorTransparency(), bOutOfMemory);
+	request->Image = CReaderTGA::ReadTgaImage(request->FileName, request->ProcessParams.TransparencyMode, bOutOfMemory);
 	if (bOutOfMemory) {
 		request->OutOfMemory = true;
 	}
@@ -647,9 +647,7 @@ void CImageLoadThread::ProcessReadWEBPRequest(CRequest * request) {
 			uint8* pPixelData = (uint8*)WebpReaderWriter::ReadImage(nWidth, nHeight, nBPP, bHasAnimation, nFrameCount, nFrameTimeMs, pEXIFData, request->OutOfMemory, pBuffer, nFileSize);
 			if (pPixelData && nBPP == 4) {
 				// Multiply alpha value into each AABBGGRR pixel
-				uint32* pImage32 = (uint32*)pPixelData;
-				for (int i = 0; i < nWidth * nHeight; i++)
-					*pImage32++ = Helpers::AlphaBlendBackground(*pImage32, CSettingsProvider::This().ColorTransparency());
+				Helpers::BlendAlpha((uint32*)pPixelData, nWidth, nHeight, request->ProcessParams.TransparencyMode);
 
 				if (bHasAnimation) {
 					m_sLastWebpFileName = sFileName;
@@ -732,10 +730,7 @@ void CImageLoadThread::ProcessReadPNGRequest(CRequest* request) {
 				if (bHasAnimation)
 					m_sLastPngFileName = sFileName;
 				// Multiply alpha value into each AABBGGRR pixel
-				uint32* pImage32 = (uint32*)pPixelData;
-				for (int i = 0; i < nWidth * nHeight; i++)
-					*pImage32++ = Helpers::AlphaBlendBackground(*pImage32, CSettingsProvider::This().ColorTransparency());
-
+				Helpers::BlendAlpha((uint32*)pPixelData, nWidth, nHeight, request->ProcessParams.TransparencyMode);
 				request->Image = new CJPEGImage(nWidth, nHeight, pPixelData, pEXIFData, 4, 0, IF_PNG, bHasAnimation, request->FrameIndex, nFrameCount, nFrameTimeMs);
 			} else {
 				DeleteCachedPngDecoder();
@@ -816,10 +811,7 @@ void CImageLoadThread::ProcessReadJXLRequest(CRequest* request) {
 				if (bHasAnimation)
 					m_sLastJxlFileName = sFileName;
 				// Multiply alpha value into each AABBGGRR pixel
-				uint32* pImage32 = (uint32*)pPixelData;
-				for (int i = 0; i < nWidth * nHeight; i++)
-					*pImage32++ = Helpers::AlphaBlendBackground(*pImage32, CSettingsProvider::This().ColorTransparency());
-
+				Helpers::BlendAlpha((uint32*)pPixelData, nWidth, nHeight, request->ProcessParams.TransparencyMode);
 				request->Image = new CJPEGImage(nWidth, nHeight, pPixelData, pEXIFData, 4, 0, IF_JXL, bHasAnimation, request->FrameIndex, nFrameCount, nFrameTimeMs);
 				free(pEXIFData);
 			} else {
@@ -889,10 +881,7 @@ void CImageLoadThread::ProcessReadAVIFRequest(CRequest* request) {
 				if (bHasAnimation)
 					m_sLastAvifFileName = sFileName;
 				// Multiply alpha value into each AABBGGRR pixel
-				uint32* pImage32 = (uint32*)pPixelData;
-				for (int i = 0; i < nWidth * nHeight; i++)
-					*pImage32++ = Helpers::AlphaBlendBackground(*pImage32, CSettingsProvider::This().ColorTransparency());
-
+				Helpers::BlendAlpha((uint32*)pPixelData, nWidth, nHeight, request->ProcessParams.TransparencyMode);
 				request->Image = new CJPEGImage(nWidth, nHeight, pPixelData, pEXIFData, 4, 0, IF_AVIF, bHasAnimation, request->FrameIndex, nFrameCount, nFrameTimeMs);
 				free(pEXIFData);
 				bSuccess = true;
@@ -949,10 +938,7 @@ void CImageLoadThread::ProcessReadHEIFRequest(CRequest* request) {
 			uint8* pPixelData = (uint8*)HeifReader::ReadImage(nWidth, nHeight, nBPP, nFrameCount, pEXIFData, request->OutOfMemory, request->FrameIndex, pBuffer, nFileSize);
 			if (pPixelData != NULL) {
 				// Multiply alpha value into each AABBGGRR pixel
-				uint32* pImage32 = (uint32*)pPixelData;
-				for (int i = 0; i < nWidth * nHeight; i++)
-					*pImage32++ = Helpers::AlphaBlendBackground(*pImage32, CSettingsProvider::This().ColorTransparency());
-
+				Helpers::BlendAlpha((uint32*)pPixelData, nWidth, nHeight, request->ProcessParams.TransparencyMode);
 				request->Image = new CJPEGImage(nWidth, nHeight, pPixelData, pEXIFData, nBPP, 0, IF_HEIF, false, request->FrameIndex, nFrameCount, nFrameTimeMs);
 				free(pEXIFData);
 			}
@@ -972,7 +958,7 @@ void CImageLoadThread::ProcessReadHEIFRequest(CRequest* request) {
 }
 
 void CImageLoadThread::ProcessReadPSDRequest(CRequest* request) {
-	request->Image = PsdReader::ReadImage(request->FileName, request->OutOfMemory);
+	request->Image = PsdReader::ReadImage(request->FileName, request->ProcessParams.TransparencyMode, request->OutOfMemory);
 	if (request->Image == NULL && !request->OutOfMemory) {
 		request->Image = PsdReader::ReadThumb(request->FileName, request->OutOfMemory);
 	}
@@ -1009,9 +995,7 @@ void CImageLoadThread::ProcessReadQOIRequest(CRequest* request) {
 			if (pPixelData != NULL) {
 				if (nBPP == 4) {
 					// Multiply alpha value into each AABBGGRR pixel
-					uint32* pImage32 = (uint32*)pPixelData;
-					for (int i = 0; i < nWidth * nHeight; i++)
-						*pImage32++ = Helpers::AlphaBlendBackground(*pImage32, CSettingsProvider::This().ColorTransparency());
+					Helpers::BlendAlpha((uint32*)pPixelData, nWidth, nHeight, request->ProcessParams.TransparencyMode);
 				}
 				request->Image = new CJPEGImage(nWidth, nHeight, pPixelData, NULL, nBPP, 0, IF_QOI, false, 0, 1, 0);
 			}
@@ -1077,7 +1061,7 @@ void CImageLoadThread::ProcessReadGDIPlusRequest(CRequest * request) {
 		m_sLastFileName = sFileName;
 	}
 	bool isOutOfMemory, isAnimatedGIF;
-	request->Image = ConvertGDIPlusBitmapToJPEGImage(pBitmap, request->FrameIndex, NULL, 0, isOutOfMemory, isAnimatedGIF);
+	request->Image = ConvertGDIPlusBitmapToJPEGImage(pBitmap, request->FrameIndex, NULL, 0, isOutOfMemory, isAnimatedGIF, request->ProcessParams.TransparencyMode);
 	request->OutOfMemory = request->Image == NULL && isOutOfMemory;
 	if (request->OutOfMemory && GetBitmapFormat(pBitmap) == IF_TIFF) {
 		DeleteCachedGDIBitmap();

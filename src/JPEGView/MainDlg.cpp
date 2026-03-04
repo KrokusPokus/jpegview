@@ -298,6 +298,8 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_pPrintImage = new CPrintImage(sp.PrintMargin(), sp.DefaultPrintWidth());
 	m_pHelpDlg = NULL;
 
+	m_nTransparencyMode = Helpers::TP_BLEND;
+
 /*############################################*/
 /* Custom variables of the linear scaling mod */
 /*############################################*/
@@ -2629,6 +2631,24 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_CONTRAST_DEC:
 			AdjustContrast((nCommand == IDM_CONTRAST_INC)? CONTRAST_INC : -CONTRAST_INC);
 			break;
+		case IDM_TOGGLE_TRANSPARENCY:
+			if (m_nTransparencyMode == Helpers::TP_BLEND)
+			{
+				m_nTransparencyMode = Helpers::TP_CHECKERBOARD;
+				//SetToast(_T("Transparency: Checkerboard"));
+			}
+			else if (m_nTransparencyMode == Helpers::TP_CHECKERBOARD)
+			{
+				m_nTransparencyMode = Helpers::TP_BLEND_INVERSE;
+				//SetToast(_T("Transparency: Inverse Blend"));
+			}
+			else //if (m_nTransparencyMode == Helpers::TP_BLEND_INVERSE)
+			{
+				m_nTransparencyMode = Helpers::TP_BLEND;
+				//SetToast(_T("Transparency: Blend"));
+			}
+			ReloadImage(true);
+			break;
 		case IDM_GAMMA_INC:
 		case IDM_GAMMA_DEC:
 			AdjustGamma((nCommand == IDM_GAMMA_INC)? 1.0/GAMMA_FACTOR : GAMMA_FACTOR);
@@ -3755,6 +3775,7 @@ CProcessParams CMainDlg::CreateProcessParams(bool bNoProcessingAfterLoad) {
 			m_dZoomKept,
 			eAutoZoomMode,
 			m_offsetKept,
+			m_nTransparencyMode,
 			_SetLandscapeModeParams(m_bLandscapeMode, *m_pImageProcParamsKept), 
 			SetProcessingFlag(_SetLandscapeModeFlags(m_eProcessingFlagsKept), PFLAG_NoProcessingAfterLoad, bNoProcessingAfterLoad));
 	} else {
@@ -3762,7 +3783,7 @@ CProcessParams CMainDlg::CreateProcessParams(bool bNoProcessingAfterLoad) {
 		CSettingsProvider& sp = CSettingsProvider::This();
 		return CProcessParams(nClientWidth, nClientHeight, 
 			CMultiMonitorSupport::GetMonitorRect(m_hWnd).Size(),
-			CRotationParams(0), 0, -1, eAutoZoomMode, CPoint(0, 0),
+			CRotationParams(0), 0, -1, eAutoZoomMode, CPoint(0, 0), m_nTransparencyMode,
 			_SetLandscapeModeParams(m_bLandscapeMode, GetDefaultProcessingParams()),
 			SetProcessingFlag(_SetLandscapeModeFlags(GetDefaultProcessingFlags(m_bLandscapeMode)), PFLAG_NoProcessingAfterLoad, bNoProcessingAfterLoad));
 	}

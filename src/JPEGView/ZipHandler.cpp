@@ -190,13 +190,7 @@ void CImageLoadThread::ProcessReadZipRequest(CRequest* request) {
 				uint8* pPixelData = (uint8*)JxlReader::ReadImage(nWidth, nHeight, nBPP, bHasAnimation, nFrameCount, nFrameTimeMs, pEXIFData, request->OutOfMemory, pBuffer, nFileSize);
 				if (pPixelData != NULL) {
 					// Multiply alpha value into each AABBGGRR pixel
-/*
-					BlendAlpha((uint32*)pPixelData, nWidth, nHeight, request->ProcessParams.TransparencyMode);
-*/
-    				uint32* pImage32 = (uint32*)pPixelData;
-    				for (int i = 0; i < nWidth * nHeight; i++)
-    					*pImage32++ = Helpers::AlphaBlendBackground(*pImage32, CSettingsProvider::This().ColorTransparency());
-
+					Helpers::BlendAlpha((uint32*)pPixelData, nWidth, nHeight, request->ProcessParams.TransparencyMode);
 					request->Image = new CJPEGImage(nWidth, nHeight, pPixelData, pEXIFData, 4, 0, IF_JXL, EXTRA_MANGA_PARAMS);
 					free(pEXIFData);
 					if (request->Image) bSuccess = true;
@@ -239,13 +233,7 @@ void CImageLoadThread::ProcessReadZipRequest(CRequest* request) {
 				uint8* pPixelData = (uint8*)PngReader::ReadImage(nWidth, nHeight, nBPP, bHasAnimation, nFrameCount, nFrameTimeMs, pEXIFData, request->OutOfMemory, pBuffer, nFileSize);
 				if (pPixelData != NULL) {
 					// Multiply alpha value into each AABBGGRR pixel
-/*
-					BlendAlpha((uint32*)pPixelData, nWidth, nHeight, request->ProcessParams.TransparencyMode);
-*/
-				uint32* pImage32 = (uint32*)pPixelData;
-				for (int i = 0; i < nWidth * nHeight; i++)
-					*pImage32++ = Helpers::AlphaBlendBackground(*pImage32, CSettingsProvider::This().ColorTransparency());
-
+					Helpers::BlendAlpha((uint32*)pPixelData, nWidth, nHeight, request->ProcessParams.TransparencyMode);
 					request->Image = new CJPEGImage(nWidth, nHeight, pPixelData, pEXIFData, 4, 0, IF_PNG, EXTRA_MANGA_PARAMS);
 					free(pEXIFData);
 					if (request->Image) bSuccess = true;
@@ -264,9 +252,7 @@ void CImageLoadThread::ProcessReadZipRequest(CRequest* request) {
 				uint8* pPixelData = (uint8*)WebpReaderWriter::ReadImage(nWidth, nHeight, nBPP, bHasAnimation, nFrameCount, nFrameTimeMs, pEXIFData, request->OutOfMemory, pBuffer, nFileSize);
 				if (pPixelData && nBPP == 4) {
 					// Multiply alpha value into each AABBGGRR pixel
-/*
-					BlendAlpha((uint32*)pPixelData, nWidth, nHeight, request->ProcessParams.TransparencyMode);
-*/
+					Helpers::BlendAlpha((uint32*)pPixelData, nWidth, nHeight, request->ProcessParams.TransparencyMode);
 					request->Image = new CJPEGImage(nWidth, nHeight, pPixelData, pEXIFData, nBPP, 0, IF_WEBP, EXTRA_MANGA_PARAMS);
 					free(pEXIFData);
 					if (request->Image) bSuccess = true;
@@ -283,12 +269,7 @@ void CImageLoadThread::ProcessReadZipRequest(CRequest* request) {
 				if (pPixelData != NULL) {
 					if (nBPP == 4) {
 						// Multiply alpha value into each AABBGGRR pixel
-/*
-						BlendAlpha((uint32*)pPixelData, nWidth, nHeight, request->ProcessParams.TransparencyMode);
-*/
-    				uint32* pImage32 = (uint32*)pPixelData;
-    				for (int i = 0; i < nWidth * nHeight; i++)
-    					*pImage32++ = Helpers::AlphaBlendBackground(*pImage32, CSettingsProvider::This().ColorTransparency());
+						Helpers::BlendAlpha((uint32*)pPixelData, nWidth, nHeight, request->ProcessParams.TransparencyMode);
 					}
 					request->Image = new CJPEGImage(nWidth, nHeight, pPixelData, NULL, nBPP, 0, IF_QOI, EXTRA_MANGA_PARAMS);
 					if (request->Image) bSuccess = true;
@@ -364,11 +345,7 @@ void CImageLoadThread::ProcessReadZipRequest(CRequest* request) {
 								if (rgb.pixels)
 								{
 									if (avifImageYUVToRGB(m_avifDecoder->image, &rgb) == AVIF_RESULT_OK) {
-										//BlendAlpha((uint32*)(rgb.pixels), m_avifDecoder->image->width, m_avifDecoder->image->height, request->ProcessParams.TransparencyMode);
-                        				uint32* pImage32 = (uint32*)pPixelData;
-                        				for (int i = 0; i < nWidth * nHeight; i++)
-                        					*pImage32++ = Helpers::AlphaBlendBackground(*pImage32, CSettingsProvider::This().ColorTransparency());
-
+										Helpers::BlendAlpha((uint32*)(rgb.pixels), m_avifDecoder->image->width, m_avifDecoder->image->height, request->ProcessParams.TransparencyMode);
 										request->Image = new CJPEGImage(m_avifDecoder->image->width, m_avifDecoder->image->height, rgb.pixels, 0, 4, 0, IF_AVIF, EXTRA_MANGA_PARAMS);
 										if (request->Image) bSuccess = true;
 									}
@@ -410,12 +387,7 @@ void CImageLoadThread::ProcessReadZipRequest(CRequest* request) {
 					uint8* pPixelData = (uint8*)HeifReader::ReadImage(nWidth, nHeight, nBPP, nFrameCount, pEXIFData, request->OutOfMemory, request->FrameIndex, pBuffer, nFileSize);
 					if (pPixelData != NULL) {
 						// Multiply alpha value into each AABBGGRR pixel
-/*
-						BlendAlpha((uint32*)pPixelData, nWidth, nHeight, request->ProcessParams.TransparencyMode);
-*/
-        				uint32* pImage32 = (uint32*)pPixelData;
-        				for (int i = 0; i < nWidth * nHeight; i++)
-        					*pImage32++ = Helpers::AlphaBlendBackground(*pImage32, CSettingsProvider::This().ColorTransparency());
+						Helpers::BlendAlpha((uint32*)pPixelData, nWidth, nHeight, request->ProcessParams.TransparencyMode);
 
 						request->Image = new CJPEGImage(nWidth, nHeight, pPixelData, pEXIFData, nBPP, 0, IF_HEIF, EXTRA_MANGA_PARAMS);
 						free(pEXIFData);

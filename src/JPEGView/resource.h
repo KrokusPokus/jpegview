@@ -284,6 +284,7 @@
 #define IDM_MARK_FOR_TOGGLE			14101		// :KeyMap: mark current image for toggling
 #define IDM_COLOR_CORRECTION_INC	14200		// :KeyMap: increase color correction amount
 #define IDM_COLOR_CORRECTION_DEC	14201		// :KeyMap: decrease color correction amount
+#define IDM_TOGGLE_TRANSPARENCY	    14202		// :KeyMap: toggle transparency mode
 #define IDM_CONTRAST_CORRECTION_INC	14300		// :KeyMap: increase contrast correction amount
 #define IDM_CONTRAST_CORRECTION_DEC	14301		// :KeyMap: decrease contrast correction amount
 #define IDM_CONTRAST_INC	14400		// :KeyMap: increase contrast

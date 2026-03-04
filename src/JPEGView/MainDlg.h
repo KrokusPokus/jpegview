@@ -342,6 +342,7 @@ private:
 	bool m_bUseLosslessWEBP;
 	bool m_isBeforeFileSelected;
 	double m_dLastImageDisplayTime;
+	Helpers::ETransparencyMode m_nTransparencyMode; //for transparent background
 	bool m_bWindowBorderless;
 	bool m_bAlwaysOnTop;
 	bool m_bSelectZoom;  // keeps track of select-to-zoom mode when CTRL+SHIFT+LMouse
