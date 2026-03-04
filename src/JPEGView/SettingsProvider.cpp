@@ -494,6 +494,7 @@ void CSettingsProvider::SaveSettings(const CImageProcessingParams& procParams,
 									 Helpers::EAutoZoomMode eAutoZoomMode, Helpers::EAutoZoomMode eAutoZoomModeFullScreen,
 									 bool bShowNavPanel, bool bShowFileName, bool bShowFileInfo,
 									 Helpers::ETransitionEffect eSlideShowTransitionEffect) {
+/* Debugging */	::OutputDebugStringW(TEXT("CSettingsProvider::SaveSettings()"));
 	MakeSureUserINIExists();
 
 	WriteDouble(_T("Contrast"), procParams.Contrast);
