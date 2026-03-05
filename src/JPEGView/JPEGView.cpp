@@ -232,9 +232,6 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 		::EnumWindows((WNDENUMPROC)EnumWindowsProc, (LPARAM)(LPCTSTR)sStartupFile);
 	}
 
-//* Debugging */	TCHAR debugtext[1024];
-//* Debugging */	swprintf(debugtext,1024,TEXT("_tWinMain() 1:   sStartupFile='%s'   _HWNDOtherInstance=%d"), sStartupFile, _HWNDOtherInstance);
-//* Debugging */	::OutputDebugStringW(debugtext);
 	int nRet = 0;
 	//Run application
 	if (_HWNDOtherInstance == NULL) {

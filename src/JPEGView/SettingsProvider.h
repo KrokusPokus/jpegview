@@ -188,6 +188,7 @@ public:
 /*GF*/	bool AllowSmoothPanning() { return m_bSmoothPanning; }
 /*GF*/	bool SmartPanningKeys() { return m_bSmartPanningKeys; }
 /*GF*/	bool TitleBarUseFileIcon() { return m_bTitleBarUseFileIcon; }
+/*GF*/	int ReadAheadBuffers() { return m_nReadAheadBuffers; }
 
 private:
 	static CSettingsProvider* sm_instance;
@@ -225,6 +226,7 @@ private:
 	CString m_sLanguage;
 	Helpers::CPUType m_eCPUAlgorithm;
 	int m_nNumCores;
+	
 	EFilterType m_eDownsamplingFilter;
 	Helpers::ESorting m_eSorting;
 	bool m_bIsSortedAscending;
@@ -349,4 +351,5 @@ private:
 /*GF*/	bool m_bSmoothPanning;
 /*GF*/	bool m_bSmartPanningKeys;
 /*GF*/	bool m_bTitleBarUseFileIcon;
+/*GF*/	int m_nReadAheadBuffers;
 };

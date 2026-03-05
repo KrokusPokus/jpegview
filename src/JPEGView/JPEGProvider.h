@@ -126,4 +126,6 @@ private:
 	void DeleteElementAt(std::list<CImageRequest*>::iterator iteratorAt); // also deletes the request and the image in the request
 	void DeleteElement(CImageRequest* pRequest);
 	bool IsDestructivelyProcessed(CJPEGImage* pImage);
+
+/*GF*/	void SetAllRequestsInactive();
 };

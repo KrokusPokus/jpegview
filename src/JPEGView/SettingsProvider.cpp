@@ -366,6 +366,11 @@ CSettingsProvider::CSettingsProvider(void) {
 	m_bSmartPanningKeys = GetBool(_T("SmartPanningKeys"), true);
 	m_bTitleBarUseFileIcon = GetBool(_T("TitleBarUseFileIcon"), true);
 
+	// based on code by nikai/aviscaerulea
+	// Number of files to preload and keep cached (beyond the currently displayed one).
+	// Default is 4: Two pages forward + two pages backward.
+	m_nReadAheadBuffers = GetInt(_T("ReadAheadBuffers"), 4, 1, 8);
+
 // -------------------------------------------------------------------------------------------
 
 	// read all user commands
@@ -494,7 +499,6 @@ void CSettingsProvider::SaveSettings(const CImageProcessingParams& procParams,
 									 Helpers::EAutoZoomMode eAutoZoomMode, Helpers::EAutoZoomMode eAutoZoomModeFullScreen,
 									 bool bShowNavPanel, bool bShowFileName, bool bShowFileInfo,
 									 Helpers::ETransitionEffect eSlideShowTransitionEffect) {
-/* Debugging */	::OutputDebugStringW(TEXT("CSettingsProvider::SaveSettings()"));
 	MakeSureUserINIExists();
 
 	WriteDouble(_T("Contrast"), procParams.Contrast);
