@@ -285,6 +285,7 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_pHelpDlg = NULL;
 
 	m_nTransparencyMode = Helpers::TP_BLEND;
+	m_strToast = _T("");
 
 /*############################################*/
 /* Custom variables of the linear scaling mod */
@@ -722,12 +723,20 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 	}
 
 	// Show current zoom factor
+
 	if (m_bInZooming || m_bShowZoomFactor) {
 		TCHAR buff[32];
 		_stprintf_s(buff, 32, _T("%d %%"), int(m_dZoom*100 + 0.5));
 		dc.SetTextColor(CSettingsProvider::This().ColorGUI());
 		HelpersGUI::SelectDefaultFileNameFont(dc);
 		HelpersGUI::DrawTextBordered(dc, buff, GetZoomTextRect(imageProcessingArea), DT_RIGHT);
+	}
+
+	if (!m_strToast.IsEmpty())
+	{
+		CRect rectToast(m_clientRect.right/2, 20, m_clientRect.right-30, 80); //left,top,right,btm
+		HelpersGUI::SelectDefaultSystemFont(dc);
+		HelpersGUI::DrawTextBordered(dc, m_strToast.GetString(), &rectToast, DT_RIGHT);
 	}
 
 	// let crop controller and panels paint its stuff
@@ -1242,8 +1251,10 @@ LRESULT CMainDlg::OnKeyDown(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /
 			bHandled = true;
 			m_pCropCtl->AbortCropping();
 		} else if (m_bMovieMode) {
+			SetToast(_T("Slideshow Paused"));
 			StopMovieMode(); // stop any running movie/slideshow
 		} else if (m_bIsAnimationPlaying) {
+			SetToast(_T("Animation Paused"));
 			StopAnimation(); // stop any running animation
 		} else if (m_bShowInfo == true) {
 			m_bShowInfo = false;
@@ -1403,6 +1414,9 @@ LRESULT CMainDlg::OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL&
 		m_pZoomNavigatorCtl->InvalidateZoomNavigatorRect();
 		CRect imageProcArea = m_pImageProcPanelCtl->PanelRect();
 		this->InvalidateRect(GetZoomTextRect(imageProcArea), FALSE);
+	} else if (wParam == TOAST_EXPIRY_TIMER_EVENT_ID) {
+		m_strToast = "";
+		this->Invalidate(FALSE);
 	} else if (wParam == PAN_TIMER_EVENT_ID) {
 		if (m_pCurrentImage != NULL) {
 			::KillTimer(this->m_hWnd, PAN_TIMER_EVENT_ID);
@@ -1835,11 +1849,13 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			break;
 		case IDM_TOGGLE:
 			if (m_pFileList->FileMarkedForToggle()) {
+				SetToast(_T("Toggling"));
 				GotoImage(POS_Toggle);
 			}
 			break;
 		case IDM_MARK_FOR_TOGGLE:
 			if (m_pFileList->Current() != NULL && m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage()) {
+				SetToast(_T("Image Marked for Toggle"));
 				m_pFileList->MarkCurrentFile();
 			}
 			break;
@@ -1951,9 +1967,11 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			GotoImage(POS_Previous);
 			break;
 		case IDM_FIRST:
+			SetToast(_T("Jump: First image"));
 			GotoImage(POS_First);
 			break;
 		case IDM_LAST:
+			SetToast(_T("Jump: Last image"));
 			GotoImage(POS_Last);
 			break;
 		case IDM_LOOP_FOLDER:
@@ -1969,13 +1987,19 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_SORT_NAME:
 		case IDM_SORT_RANDOM:
 		case IDM_SORT_SIZE:
-			m_pFileList->SetSorting(
-				(nCommand == IDM_SORT_CREATION_DATE) ? Helpers::FS_CreationTime : 
-				(nCommand == IDM_SORT_MOD_DATE) ? Helpers::FS_LastModTime : 
-				(nCommand == IDM_SORT_RANDOM) ? Helpers::FS_Random : 
-				(nCommand == IDM_SORT_SIZE) ? Helpers::FS_FileSize : Helpers::FS_FileName, m_pFileList->IsSortedAscending());
-			if (m_pEXIFDisplayCtl->IsActive() || m_bShowFileName) {
-				this->Invalidate(FALSE);
+			{
+				Helpers::ESorting nSortMode = (nCommand == IDM_SORT_CREATION_DATE) ? Helpers::FS_CreationTime :
+					(nCommand == IDM_SORT_MOD_DATE) ? Helpers::FS_LastModTime :
+					(nCommand == IDM_SORT_RANDOM) ? Helpers::FS_Random :
+					(nCommand == IDM_SORT_SIZE) ? Helpers::FS_FileSize : Helpers::FS_FileName;
+				bool bSortedAscending = m_pFileList->IsSortedAscending();
+
+				ToastSortingMode(nSortMode, bSortedAscending);
+				m_pFileList->SetSorting(nSortMode, bSortedAscending);
+
+				if (m_pEXIFDisplayCtl->IsActive() || m_bShowFileName) {
+					this->Invalidate(FALSE);
+				}
 			}
 			break;
 		case IDM_SORT_ASCENDING:
@@ -1986,10 +2010,16 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			}
 			break;
 		case IDM_STOP_MOVIE:
+			SetToast(_T("Pause"));
 			StopMovieMode();
 			break;
 		case IDM_SLIDESHOW_RESUME:
+			{
+			TCHAR sToastText[1024];
+			swprintf(sToastText,1024,TEXT("Slideshow Resumed (Timer %d s)"), (int)(1.0/m_dMovieFPS));
+			SetToast(sToastText);
 			StartMovieMode(m_dMovieFPS);
+			}
 			break;
 		case IDM_SLIDESHOW_1:
 		case IDM_SLIDESHOW_2:
@@ -2015,6 +2045,9 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 				nValue *= 1000; // seconds
 			}
 			*/
+			TCHAR sToastText[1024];
+			swprintf(sToastText,1024,TEXT("Starting Slideshow (Timer %d s)"), nValue);
+			SetToast(sToastText);
 			StartMovieMode(1.0/nValue);
 			}
 			break;
@@ -2047,6 +2080,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_MOVIE_30_FPS:
 		case IDM_MOVIE_50_FPS:
 		case IDM_MOVIE_100_FPS:
+			SetToast(_T("Play"));
 			StartMovieMode(nCommand - IDM_MOVIE_START_FPS);
 			break;
 		case IDM_SAVE_PARAM_DB:
@@ -2178,19 +2212,23 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_AUTO_CORRECTION:
 			m_bAutoContrastSection = false;
 			m_bAutoContrast = !m_bAutoContrast;
+			SetToast(m_bAutoContrast? _T("Auto Contrast: ON") : _T("Auto Contrast: OFF"));
 			this->Invalidate(FALSE);
 			break;
 		case IDM_AUTO_CORRECTION_SECTION:
 			m_bAutoContrast = true;
 			m_bAutoContrastSection = !m_bAutoContrastSection;
+			SetToast(m_bAutoContrastSection? _T("Auto Contrast (Section): ON") : _T("Auto Contrast (Section): OFF"));
 			this->Invalidate(FALSE);
 			break;
 		case IDM_LDC:
 			m_bLDC = !m_bLDC;
+			SetToast(m_bLDC? _T("Local Density Correction: ON") : _T("Local Density Correction: OFF"));
 			this->Invalidate(FALSE);
 			break;
 		case IDM_LANDSCAPE_MODE:
 			m_bLandscapeMode = !m_bLandscapeMode;
+			SetToast(m_bLandscapeMode? _T("Landscape Enhancement: ON") : _T("Landscape Enhancement: OFF"));
 			m_pNavPanelCtl->GetNavPanel()->GetBtnLandscapeMode()->SetActive(m_bLandscapeMode);
 			if (m_bLandscapeMode) {
 				*m_pImageProcParams = _SetLandscapeModeParams(true, *m_pImageProcParams);
@@ -2283,6 +2321,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			break;
 		case IDM_TOGGLE_FIT_TO_SCREEN_100_PERCENTS:
 		case IDM_TOGGLE_FILL_WITH_CROP_100_PERCENTS:
+			m_bShowZoomFactor = true;
 			if (fabs(m_dZoom - 1) < 0.01) {
 				ResetZoomToFitScreen(nCommand == IDM_TOGGLE_FILL_WITH_CROP_100_PERCENTS, true, true);
 			} else {
@@ -2400,7 +2439,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			break;
 		case IDM_ALWAYS_ON_TOP:
 			ToggleAlwaysOnTop();
-
+			SetToast(m_bAlwaysOnTop? _T("Always on Top: enabled"): _T("Always on Top: disabled"));
 			break;
 		case IDM_FIT_WINDOW_TO_IMAGE:
 			// Note: If auto fit is on but the window size does not match the image size (due to manual window resizing), restore window to image
@@ -2493,8 +2532,10 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			if (m_bMovieMode) {
 				if (m_bAutoExit)
 					CleanupAndTerminate();
-				else
+				else {
+					SetToast(_T("Pause"));
 					StopMovieMode(); // stop any running movie/slideshow
+				}
 			} else if (m_bIsAnimationPlaying) {
 				if (m_bAutoExit)
 					CleanupAndTerminate();
@@ -2623,17 +2664,17 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			if (m_nTransparencyMode == Helpers::TP_BLEND)
 			{
 				m_nTransparencyMode = Helpers::TP_CHECKERBOARD;
-				//SetToast(_T("Transparency: Checkerboard"));
+				SetToast(_T("Transparency: Checkerboard"));
 			}
 			else if (m_nTransparencyMode == Helpers::TP_CHECKERBOARD)
 			{
 				m_nTransparencyMode = Helpers::TP_BLEND_INVERSE;
-				//SetToast(_T("Transparency: Inverse Blend"));
+				SetToast(_T("Transparency: Inverse Blend"));
 			}
 			else //if (m_nTransparencyMode == Helpers::TP_BLEND_INVERSE)
 			{
 				m_nTransparencyMode = Helpers::TP_BLEND;
-				//SetToast(_T("Transparency: Blend"));
+				SetToast(_T("Transparency: Blend"));
 			}
 			ReloadImage(true);
 			break;
@@ -2650,6 +2691,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			break;
 		case IDM_TOGGLE_RESAMPLING_QUALITY:
 			m_bHQResampling = !m_bHQResampling;
+			SetToast(m_bHQResampling? _T("Resampling: enabled"): _T("Resampling: disabled"));
 			this->Invalidate(FALSE);
 			break;
 		case IDM_TOGGLE_MONITOR:
@@ -2772,11 +2814,17 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			break;
 		case IDM_TOGGLE_SORT_RANDOM:
 			if (m_pFileList != NULL) {
+				Helpers::ESorting nSortMode;
+				bool bSortedAscending = m_pFileList->IsSortedAscending();
+				
 				if (m_pFileList->GetSorting() == Helpers::FS_FileName) {
-					m_pFileList->SetSorting(Helpers::FS_Random, m_pFileList->IsSortedAscending());
+					nSortMode = Helpers::FS_Random;
 				} else if (m_pFileList->GetSorting() == Helpers::FS_Random) {
-					m_pFileList->SetSorting(Helpers::FS_FileName, m_pFileList->IsSortedAscending());
+					nSortMode = Helpers::FS_FileName;
 				}
+
+				ToastSortingMode(nSortMode, bSortedAscending);
+				m_pFileList->SetSorting(nSortMode, bSortedAscending);
 			}
 			if (m_pEXIFDisplayCtl->IsActive() || m_bShowFileName) {
 				this->Invalidate(FALSE);
@@ -4711,4 +4759,38 @@ float CMainDlg::MaxRatio(float valA, float valB) {
 	if (dRatio < 1.0)
 		dRatio = 1 / dRatio;
 	return dRatio;
+}
+
+void CMainDlg::SetToast(LPCTSTR a_strToast, DWORD a_nDurationMs)
+{
+	::KillTimer(this->m_hWnd, TOAST_EXPIRY_TIMER_EVENT_ID);
+	::SetTimer(this->m_hWnd, TOAST_EXPIRY_TIMER_EVENT_ID, a_nDurationMs, NULL);
+	m_strToast = a_strToast;
+	this->Invalidate(FALSE);
+}
+
+/*
+* Set toast only if empty, so as not to override existing toast!
+*/
+void CMainDlg::SetToastIfEmpty(LPCTSTR a_strToast, DWORD a_nDurationMs)
+{
+	if (m_strToast.IsEmpty())
+		SetToast(a_strToast, a_nDurationMs);
+}
+
+/*
+* Show toast for current files sorting mode (and up counting mode).
+*/
+void CMainDlg::ToastSortingMode(Helpers::ESorting nSortMode, bool bUpCounting)
+{
+	const wchar_t* sSortModes[] = {
+		_T("Sorting: Modification Time"),
+		_T("Sorting: Creation Time"),
+		_T("Sorting: Name"),
+		_T("Sorting: Random"),
+		_T("Sorting: Size")
+	};
+	CString sSortMode = sSortModes[(int)nSortMode];
+	sSortMode += (bUpCounting ? _T(" ^") : _T(" v"));
+	SetToast(sSortMode);
 }
