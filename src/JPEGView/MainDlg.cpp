@@ -3405,7 +3405,7 @@ void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
 		case POS_NextAnimation:
 			{
 				bool bGotoNextImage = true;
-				nFrameIndex = Helpers::GetFrameIndex(m_pCurrentImage, true, ePos == POS_NextAnimation, bGotoNextImage);
+				nFrameIndex = Helpers::GetFrameIndex(m_pCurrentImage, +1, ePos == POS_NextAnimation, bGotoNextImage);
 				if (bGotoNextImage)
 					m_pFileList = m_pFileList->Next();
 				else
@@ -3418,7 +3418,7 @@ void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
 		case POS_Previous:
 			{
 				bool bGotoPrevImage;
-				nFrameIndex = Helpers::GetFrameIndex(m_pCurrentImage, false, false, bGotoPrevImage);
+				nFrameIndex = Helpers::GetFrameIndex(m_pCurrentImage, -1, false, bGotoPrevImage);
 				if (bGotoPrevImage) m_pFileList = m_pFileList->Prev();
 				eDirection = CJPEGProvider::BACKWARD;
 				bNoWrapAroundEdgeFrame = false; // previous image at edge is not a wraparound

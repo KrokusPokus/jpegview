@@ -101,7 +101,7 @@ CJPEGImage* CJPEGProvider::RequestImage(CFileList* pFileList, EReadAheadDirectio
 		}
 	}
 
-//[GF] Do the cleanup later. StartNewRequestBundle() now marks all files to keep as active.
+//[GF] Do the cleanup later. We first need StartNewRequestBundle() to mark all files to keep in cache as IsActive.
 /*
 	// cleanup stuff no longer used
 	RemoveUnusedImages(bRemoveAlsoActiveRequests);
@@ -255,7 +255,7 @@ void CJPEGProvider::StartNewRequestBundle(CFileList* pFileList, EReadAheadDirect
 	}
 	for (int i = 0; i < nNumRequests; i++) {
 		bool bSwitchImage = true;
-		int nFrameIndex = (pLastReadyRequest != NULL) ? Helpers::GetFrameIndex(pLastReadyRequest->Image, eDirection == FORWARD, true, bSwitchImage) : 0;
+		int nFrameIndex = (pLastReadyRequest != NULL) ? Helpers::GetFrameIndex(pLastReadyRequest->Image, (eDirection == BACKWARD) ? -(i+1) : (i+1), true, bSwitchImage) : 0;
 		LPCTSTR sFileName = bSwitchImage ? pFileList->PeekNextPrev(i + 1, eDirection == FORWARD, eDirection == TOGGLE) : pFileList->Current();
 		if (sFileName != NULL) {
 			CImageRequest* pRequest = FindRequest(sFileName, nFrameIndex);
