@@ -723,7 +723,6 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 	}
 
 	// Show current zoom factor
-
 	if (m_bInZooming || m_bShowZoomFactor) {
 		TCHAR buff[32];
 		_stprintf_s(buff, 32, _T("%d %%"), int(m_dZoom*100 + 0.5));

@@ -63,6 +63,8 @@ void CImageLoadThread::ProcessReadZipRequest(CRequest* request) {
 	const wchar_t* sFileName;
 	int nFrameIndex = request->FrameIndex;
 	sFileName = (const wchar_t*)request->FileName;
+
+
 	if (sFileName == m_sLastZipFileName) {
 		if (m_nZipCount <= 0)
 			return; //abort as no valid image entries in archive; all marked as non-image
@@ -327,7 +329,7 @@ void CImageLoadThread::ProcessReadZipRequest(CRequest* request) {
 						m_sLastAvifFileName = sFileName;
 					// Multiply alpha value into each AABBGGRR pixel
 					Helpers::BlendAlpha((uint32*)pPixelData, nWidth, nHeight, request->ProcessParams.TransparencyMode);
-					request->Image = new CJPEGImage(nWidth, nHeight, pPixelData, pEXIFData, 4, 0, IF_AVIF, bHasAnimation, request->FrameIndex, nFrameCount, nFrameTimeMs);
+					request->Image = new CJPEGImage(nWidth, nHeight, pPixelData, pEXIFData, 4, 0, IF_AVIF, EXTRA_MANGA_PARAMS);
 					free(pEXIFData);
 					if (request->Image) bSuccess = true;
 				} else {
