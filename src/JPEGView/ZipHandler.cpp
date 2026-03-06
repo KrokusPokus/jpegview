@@ -12,6 +12,7 @@
 #include "ReaderBMP.h"
 #include "RAWWrapper.h"
 #include "HEIFWrapper.h"
+#include "AVIFWrapper.h"
 
 #include "zip/zip.h"
 #include "bit7z/include/bitfileextractor.hpp"
@@ -313,66 +314,26 @@ void CImageLoadThread::ProcessReadZipRequest(CRequest* request) {
 				}
 				SetErrorMode(nPrevErrorMode);
 			}
-/*
 			else if (EXT_MATCHES("avif")
 				|| ((nFileSize > 11) && !memcmp(pBuffer + 4, "ftypavi", 7)))
 			{
-				try
-				{
-					avifRGBImage rgb;
-					memset(&rgb, 0, sizeof(rgb));
-					m_avifDecoder = avifDecoderCreate();
-
-					avifResult result = avifDecoderSetIOMemory(m_avifDecoder, (const uint8_t*)pBuffer, nFileSize);
-					if (result == AVIF_RESULT_OK) {
-						m_avifDecoder->io->data = pBuffer;
-						result = avifDecoderParse(m_avifDecoder);
-						if (result == AVIF_RESULT_OK) {
-							result = avifDecoderNthImage(m_avifDecoder, 0); //ignore animation, just 1st frame
-							if (result == AVIF_RESULT_OK) {
-								avifRGBImageSetDefaults(&rgb, m_avifDecoder->image);
-								rgb.format = AVIF_RGB_FORMAT_BGRA;
-								if (rgb.depth > 8)
-								{
-									rgb.depth = 8;
-								}
-								if (rgb.pixels) {
-									delete[] rgb.pixels;
-									rgb.pixels = 0;
-								}
-								rgb.rowBytes = rgb.width * avifRGBImagePixelSize(&rgb);
-								rgb.pixels = new(std::nothrow) unsigned char[(size_t)rgb.rowBytes * rgb.height];
-								if (rgb.pixels)
-								{
-									if (avifImageYUVToRGB(m_avifDecoder->image, &rgb) == AVIF_RESULT_OK) {
-										Helpers::BlendAlpha((uint32*)(rgb.pixels), m_avifDecoder->image->width, m_avifDecoder->image->height, request->ProcessParams.TransparencyMode);
-										request->Image = new CJPEGImage(m_avifDecoder->image->width, m_avifDecoder->image->height, rgb.pixels, 0, 4, 0, IF_AVIF, EXTRA_MANGA_PARAMS);
-										if (request->Image) bSuccess = true;
-									}
-								}
-								else
-								{
-									request->OutOfMemory = true;
-								}
-							}
-						}
-					}
-					if (m_avifDecoder && m_avifDecoder->io && m_avifDecoder->io->data)
-					{
-						//we'll cleanup (pBuffer) ourselves, instead of leaving it to DeleteCachedAvifDecoder
-						m_avifDecoder->io->data = 0;
-					}
-					if (!bSuccess)
-					{
-						ext = "heif"; //try fallback on HeifReader
-					}
+				int nWidth, nHeight, nBPP, nFrameCount, nFrameTimeMs;
+				bool bHasAnimation;
+				void* pEXIFData;
+				uint8* pPixelData = (uint8*)AvifReader::ReadImage(nWidth, nHeight, nBPP, bHasAnimation, request->FrameIndex, 
+					nFrameCount, nFrameTimeMs, pEXIFData, request->OutOfMemory, pBuffer, nFileSize);
+				if (pPixelData != NULL) {
+					if (bHasAnimation)
+						m_sLastAvifFileName = sFileName;
+					// Multiply alpha value into each AABBGGRR pixel
+					Helpers::BlendAlpha((uint32*)pPixelData, nWidth, nHeight, request->ProcessParams.TransparencyMode);
+					request->Image = new CJPEGImage(nWidth, nHeight, pPixelData, pEXIFData, 4, 0, IF_AVIF, bHasAnimation, request->FrameIndex, nFrameCount, nFrameTimeMs);
+					free(pEXIFData);
+					if (request->Image) bSuccess = true;
+				} else {
+					DeleteCachedAvifDecoder();
 				}
-				catch (...) {
-					request->Image = NULL;
-				}
-				DeleteCachedAvifDecoder();
 			}
-*/
 			if (!bSuccess && (EXT_MATCHES("heif") || EXT_MATCHES("heic")
 				|| ((nFileSize > 11)
 					&& !memcmp(pBuffer + 4, "ftyp", 4)
