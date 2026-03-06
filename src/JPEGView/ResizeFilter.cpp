@@ -135,7 +135,7 @@ static double inline EvaluateKernel(double dX, EFilterType eFilter) {
 	}
 	return 0.0;
 }
-
+/*
 // Evaluation of filter kernel using an integration over the source pixel width.
 // This implements a convolution of a box filter with the filter kernel.
 // Note that dX is given in the source pixel space
@@ -153,7 +153,7 @@ static double EvaluateKernelIntegrated(double dX, EFilterType eFilter, double dM
 	}
 	return dSum;
 }
-
+*/
 
 static double EvaluateCubicFilterKernel(double dFrac, int nKernelElement) {
 	//GF: This original version was using Catrom for upscaling

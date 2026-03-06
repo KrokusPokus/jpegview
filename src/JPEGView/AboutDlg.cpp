@@ -84,7 +84,7 @@ LRESULT CAboutDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPara
 	m_richEdit.SetWindowText(CString(CNLS::GetString(_T("Licensed under the GNU general public license (GPL), see readme file for details"))) + 
 		_T(": README\n\n") +
 		CNLS::GetString(_T("Home page of this fork")) +
-		_T(":\nhttps://github.com/KrokusPokus/JPEGView_L_Testing\n\n") +
+		_T(":\nhttps://github.com/KrokusPokus/JPEGView_L\n\n") +
 		CNLS::GetString(_T("Home page of the original project")) + 
 		_T(":\nhttps://github.com/sylikc/jpegview"));
 	m_richEdit.SetEventMask(ENM_LINK);

@@ -10,4 +10,4 @@
 #define IPPANEL_TIMER_EVENT_ID 8 // to show image processing panel in window mode
 #define ANIMATION_TIMER_EVENT_ID 9 // GIF animation timer ID
 #define PAN_TIMER_EVENT_ID 10 // [GF] Smooth scroll panning timer ID
-#define TOAST_EXPIRY_TIMER_EVENT_ID 10 // [sdneon] Toast timer ID
+#define TOAST_EXPIRY_TIMER_EVENT_ID 11 // [sdneon] Toast timer ID

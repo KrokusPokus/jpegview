@@ -2312,7 +2312,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 					m_eAutoZoomModeWindowed = eAutoZoomMode;
 
 
-				m_bShowZoomFactor = true; // show zoom info at bottom right
+				m_bInZooming = true;
 				StartLowQTimer(ZOOM_TIMEOUT);
 				this->Invalidate(FALSE);
 				AdjustWindowToImage(false);
@@ -3763,6 +3763,8 @@ void CMainDlg::ResetZoomToFitScreen(bool bFillWithCrop, bool bAllowEnlarge, bool
 			m_bUserZoom = m_dZoom > 1.0;
 			m_bUserPan = false;
 			if (fabs(dOldZoom - m_dZoom) > 0.01) {
+				m_bInZooming = true;
+				StartLowQTimer(ZOOM_TIMEOUT);
 				this->Invalidate(FALSE);
 			}
 		}

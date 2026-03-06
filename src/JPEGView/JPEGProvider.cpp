@@ -43,13 +43,7 @@ CJPEGImage* CJPEGProvider::RequestImage(CFileList* pFileList, EReadAheadDirectio
 	// Search if we have the requested image already present or in progress
 	CImageRequest* pRequest = FindRequest(strFileName, nFrameIndex);
 	bool bDirectionChanged = eDirection != m_eOldDirection || eDirection == TOGGLE;
-	// bool bRemoveAlsoActiveRequests = bDirectionChanged; // if direction changed, all read-ahead requests are wrongly guessed
-/*
-	[From] https://github.com/aviscaerulea/jpegview-nt.git
-	"Since this is a bidirectional read-ahead, the read-ahead cache is maintained even
-	when changing direction (TOGGLE is an exception and the entire cache is discarded)."
-*/
-	bool bRemoveAlsoActiveRequests = (eDirection == TOGGLE && bDirectionChanged);
+	bool bRemoveAlsoActiveRequests = (eDirection == TOGGLE && eDirection != m_eOldDirection); // we use a symmetrical cache, so direction changes don't make our cache invalid.
 	bool bWasOutOfMemory = false;
 	m_eOldDirection = eDirection;
 
